@@ -4,12 +4,14 @@ version: 0.1.0
 author: Franciszek Szczepan Wawrzak <frank@wawrzak.com>
 homepage: https://github.com/fsw/swift_composer
 environment:
-  sdk: ^2.7.0
+  sdk: ">=2.7.0 <3.0.0"
 dependencies:
-  build: any
-  build_config: any
-  yaml: any
+  build: ^1.2.2
+  build_config: ^0.4.1+1
+  yaml: ^2.2.0
   source_gen: ^0.9.4
+  analyzer: ^0.39.4
+  path: ^1.6.4
 dev_dependencies:
   test: any
   build_runner: any
