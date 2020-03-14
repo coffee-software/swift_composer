@@ -31,10 +31,10 @@ class TypeInfo {
 
 
   TypeInfo(this.typeMap, this.fullName, this.element) {
-    type = element.type;
-    for (var type in element.typeParameters) {
-      //typeArguments.add(new TypeInfo.fromType(type, {}));
-    }
+    type = element.thisType;
+    /*for (var type in element.typeParameters) {
+      typeArguments.add(new TypeInfo.fromType(type, {}));
+    }*/
   }
 
   TypeInfo.fromType(this.typeMap, DartType type, Map<DartType, DartType> typeArgumentsMap) {
@@ -51,8 +51,8 @@ class TypeInfo {
     if (type is ParameterizedType) {
       for (DartType def in typeMap.allTypesByType.keys) {
         if (def is ParameterizedType) {
-          if (def.typeArguments.length == (type as ParameterizedType).typeArguments.length) {
-            DartType instantiated = def.instantiate((type as ParameterizedType).typeArguments);
+          if (def.typeArguments.length == type.typeArguments.length) {
+            DartType instantiated = def.instantiate(type.typeArguments);
             if (instantiated == type) {
               genericType = def;
               fullName = typeMap.allTypesByType[def].fullName;
@@ -100,17 +100,14 @@ class TypeInfo {
     //TODO use ".."
     /*allFields().forEach((fieldElement){
       if (fieldElement.setter != null) {
-        if (fieldElement.type.name != 'FieldsOfType') {
+        lines.add("//${fieldElement.type.name}[${fieldElement.type.hashCode.toString()}]");
+        //typeArgumentsMap());
 
-          lines.add("//${fieldElement.type.name}[${fieldElement.type.hashCode.toString()}]");
-          //typeArgumentsMap());
-
-          String value = getFieldAssignmentValue(fieldElement);
-          if (value != null) {
-            lines.add(
-              '${varName}.${fieldElement.name} = ' + value + ';'
-            );
-          }
+        String value = getFieldAssignmentValue(fieldElement);
+        if (value != null) {
+          lines.add(
+            '${varName}.${fieldElement.name} = ' + value + ';'
+          );
         }
       }
     });*/
@@ -142,6 +139,7 @@ class TypeInfo {
         return metadataElement.toSource();
       }
     }
+    return null;
   }
 
   String getFieldInitializationValue(TypeInfo fieldType, FieldElement field) {
@@ -161,8 +159,8 @@ class TypeInfo {
             return typeConfig[field.name].toString();
           default:
             return 'new ' + fieldType.displayName + '.fromString("' + typeConfig[field.name] + '")';
-          }
-          return null;
+        }
+        break;
       case '@InjectInstances':
           TypeInfo type = fieldType.typeArguments[1];
           typeMap.subtypeInstanes[type.displayName] = type;
@@ -192,9 +190,10 @@ class TypeInfo {
         case '@Require':
             return field.name;
         case '@InjectFields':
-            String args = allFields().where((f) => f.type.name != 'dynamic').map((e) => '\'${e.name}\':this.${e.name}').join(',');
-            return 'new ${fieldType.type.name}({${args}});\n';
+            String args = allFields().where((f) => f.type.getDisplayString() != 'dynamic').map((e) => '\'${e.name}\':this.${e.name}').join(',');
+            return 'new ${fieldType.type.getDisplayString()}({${args}});\n';
       }
+      return null;
   }
 
   List<ClassElement> classPath() {
@@ -323,7 +322,7 @@ class TypeInfo {
 
     lines.add("//interceptor for ${displayName}");
     for (var k in typeArgumentsMap().keys) {
-      lines.add("//${k.name}[${k.hashCode.toString()}] => ${typeArgumentsMap()[k].name}[${typeArgumentsMap()[k].hashCode.toString()}]");
+      lines.add("//${k.getDisplayString()}[${k.hashCode.toString()}] => ${typeArgumentsMap()[k].getDisplayString()}[${typeArgumentsMap()[k].hashCode.toString()}]");
     }
     lines.add("//can be singleton: ${canBeSingleton()?'TRUE':'FALSE'}");
     for (var s in classPath()) {
@@ -353,29 +352,26 @@ class TypeInfo {
 
     allFields().forEach((fieldElement){
       if (fieldElement.setter != null) {
-        if (fieldElement.type.name != 'FieldsOfType') {
+        lines.add("//${fieldElement.type.getDisplayString()}");
+        //typeArgumentsMap());
 
-          lines.add("//${fieldElement.type.name}");
-          //typeArgumentsMap());
+        if (elementInjectionType(fieldElement) == '@Create') {
+          lines.add("//create");
+          //TMP
+          TypeInfo ti = TypeInfo.fromType(typeMap, fieldElement.type, typeArgumentsMap());
 
-          if (elementInjectionType(fieldElement) == '@Create') {
-            lines.add("//create");
-            //TMP
-            TypeInfo ti = TypeInfo.fromType(typeMap, fieldElement.type, typeArgumentsMap());
-
-            TypeInfo candidate = typeMap.getBestCandidate(ti);
-            if (candidate != null) {
-              lines.add('this.${fieldElement.name} = ');
-              lines.addAll(candidate.generateCreator());
-              lines.add(';');
-            }
-          } else {
-            String value = getFieldAssignmentValue(fieldElement);
-            if (value != null) {
-              lines.add(
-                'this.${fieldElement.name} = ' + value + ';'
-              );
-            }
+          TypeInfo candidate = typeMap.getBestCandidate(ti);
+          if (candidate != null) {
+            lines.add('this.${fieldElement.name} = ');
+            lines.addAll(candidate.generateCreator());
+            lines.add(';');
+          }
+        } else {
+          String value = getFieldAssignmentValue(fieldElement);
+          if (value != null) {
+            lines.add(
+              'this.${fieldElement.name} = ' + value + ';'
+            );
           }
         }
       }
@@ -570,7 +566,7 @@ class TypeMap {
   bool registerElement(String fullname, Element element) {
     if (element is ClassElement) {
       //ret += '//lib ${fullname}\n';
-      allTypesByType[element.type] = allTypes[fullname] = new TypeInfo(this, fullname, element);
+      allTypesByType[element.thisType] = allTypes[fullname] = new TypeInfo(this, fullname, element);
       return true;
     }
     return false;
@@ -638,7 +634,7 @@ class TypeMap {
         if (parentType.typeArguments.length == st.typeArguments.length) {
           for (var i=0; i < parentType.typeArguments.length; i++) {
             parentFits = parentFits && (
-              (parentType.typeArguments[i].type.name == st.typeArguments[i].name)
+              (parentType.typeArguments[i].type.getDisplayString() == st.typeArguments[i].getDisplayString())
               ||
               library.typeSystem.isSubtypeOf(st.typeArguments[i], parentType.typeArguments[i].type)
             );//
@@ -665,9 +661,9 @@ class CompiledOmGenerator {
   Map getClassConfig(ClassElement classElement) {
     Map<dynamic, dynamic> classConfig = {};
     for (var st in classElement.allSupertypes.reversed) {
-      if (config.containsKey(st.name)){
+      if (config.containsKey(st.getDisplayString())){
         //ret += '//' + ;
-        classConfig.addAll(config[st.name]);
+        classConfig.addAll(config[st.getDisplayString()]);
       }
     }
 

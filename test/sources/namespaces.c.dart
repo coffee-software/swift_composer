@@ -123,13 +123,13 @@ class $test_module2_SuperComplexGeneric<A, B>
 //parent: Container [@bool get Compose]
 class $Container extends Container {
   $Container() {
-//ComplexGeneric
+//ComplexGeneric<Foo, Bar>
 //create
-//List
+//List<ComplexGeneric<Foo, Bar>>
 //create
-//List
+//List<ComplexGeneric<Foo, List<Bar>>>
 //create
-//SuperComplexGeneric
+//SuperComplexGeneric<List<Bar>, SimpleGeneric<String>>
 //create
   }
   T plugin<T>() {}
@@ -141,13 +141,13 @@ class $Container extends Container {
 //parent: GenericContainer [@bool get Compose]
 class $GenericContainer<T> extends GenericContainer<T> {
   $GenericContainer() {
-//ComplexGeneric
+//ComplexGeneric<T, Bar>
 //create
-//List
+//List<ComplexGeneric<T, String>>
 //create
-//List
+//List<ComplexGeneric<T, SimpleGeneric<List<Bar>>>>
 //create
-//SuperComplexGeneric
+//SuperComplexGeneric<T, SimpleGeneric<String>>
 //create
   }
   T plugin<T>() {}
@@ -161,13 +161,13 @@ class $GenericContainer<T> extends GenericContainer<T> {
 //parent: GenericContainer [@bool get Compose]
 class $FooContainer extends FooContainer {
   $FooContainer() {
-//ComplexGeneric
+//ComplexGeneric<T, Bar>
 //create
-//List
+//List<ComplexGeneric<T, String>>
 //create
-//List
+//List<ComplexGeneric<T, SimpleGeneric<List<Bar>>>>
 //create
-//SuperComplexGeneric
+//SuperComplexGeneric<T, SimpleGeneric<String>>
 //create
   }
   T plugin<T>() {}
@@ -232,4 +232,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 5ms
+//generated in 21ms

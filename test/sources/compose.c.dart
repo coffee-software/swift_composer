@@ -121,15 +121,15 @@ class $SuperComplexGeneric<A, B> extends SuperComplexGeneric<A, B> {
 //parent: Container [@bool get Compose]
 class $Container extends Container {
   $Container(fooRequired, genericRequired) {
-//SimpleGeneric
+//SimpleGeneric<Foo>
 //Foo
 //create
     this.fooCreated = new $m1_Foo();
-//SimpleGeneric
+//SimpleGeneric<Foo>
 //create
 //Foo
     this.fooRequired = fooRequired;
-//SimpleGeneric
+//SimpleGeneric<Foo>
     this.genericRequired = genericRequired;
   }
   T plugin<T>() {}
@@ -148,7 +148,7 @@ class $Container extends Container {
 //parent: GenericInterface []
 class $GenericTypedWithFoo extends GenericTypedWithFoo {
   $GenericTypedWithFoo() {
-//SimpleGeneric
+//SimpleGeneric<T>
   }
   T plugin<T>() {}
   m1.Foo get element => $om.m1_Foo;
@@ -163,10 +163,10 @@ class $GenericTypedWithFoo extends GenericTypedWithFoo {
 //parent: GenericContainer []
 class $ContainerFoo extends ContainerFoo {
   $ContainerFoo() {
-//AbstractGeneric
+//AbstractGeneric<T>
 //create
     this.genericfoo = new $GenericTypedWithFoo();
-//GenericInterface
+//GenericInterface<T>
 //create
     this.genericinterface = new $GenericTypedWithFoo();
 //T
@@ -235,4 +235,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 4ms
+//generated in 16ms
