@@ -1,0 +1,7 @@
+builders:
+  swift_composer:
+    import: "package:swift_composer/swift_generator.dart"
+    builder_factories: ["swiftBuilder"]
+    build_extensions: {".dart": [".c.dart"]}
+    auto_apply: root_package
+    build_to: source

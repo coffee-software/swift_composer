@@ -1,0 +1,15 @@
+name: swift_composer
+description: Extensible Object Manager with no boilerplate code using source_gen
+version: 0.1.0
+author: Franciszek Szczepan Wawrzak <frank@wawrzak.com>
+homepage: https://github.com/fsw/swift_composer
+environment:
+  sdk: ^2.7.0
+dependencies:
+  build: any
+  build_config: any
+  yaml: any
+  source_gen: ^0.9.4
+dev_dependencies:
+  test: any
+  build_runner: any
