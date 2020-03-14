@@ -157,14 +157,14 @@ abstract class TestSerializable {
   void fieldsToJson(Map target);
 
   @CompileFieldsOfType
-  @AnnotatedWith("JsonField")
-  void _fieldsToJsonFoo(Map target, String name, String field) {
+  @AnnotatedWith(JsonField)
+  void _fieldsToJsonString(Map target, String name, String field) {
     target[name] = field;
   }
 
   @CompileFieldsOfType
-  @AnnotatedWith("JsonField")
-  void _fieldsToJsonFoo(Map target, String name, int field) {
+  @AnnotatedWith(JsonField)
+  void _fieldsToJsonInt(Map target, String name, int field) {
     target[name] = field;
   }
 
