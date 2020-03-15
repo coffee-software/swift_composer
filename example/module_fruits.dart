@@ -5,9 +5,8 @@ const JsonEncode = true;
 
 @Compose
 abstract class AllAvailableFruits {
-  @InjectInstances
-  Map<String, Fruit> get allFruits;
-
+  @SubtypeFactory
+  Fruit createFruit(String className, String name);
 }
 
 @Compose
@@ -16,6 +15,7 @@ abstract class Fruit implements Pluggable {
   @InjectClassName
   String get className;
 
+  @Require
   @JsonEncode
   String name;
 
@@ -31,9 +31,15 @@ abstract class Fruit implements Pluggable {
   @JsonEncode
   double width = 1.0;
 
+
+  String getFullName(String prefix, String suffix) {
+    return prefix + name + suffix;
+  }
+
   Map toJson() {
       Map ret = new Map();
       ret['className'] = className;
+      ret['fullName'] = getFullName("this fruit is called '", "'");
       this.fieldsToJson(ret);
       return ret;
   }

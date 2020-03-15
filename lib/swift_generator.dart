@@ -131,6 +131,7 @@ class TypeInfo {
     '@Factory',
     '@SubtypeFactory',
     '@Template',
+    '@MethodPlugin',
   ];
 
   String elementInjectionType(Element element) {
@@ -317,6 +318,8 @@ class TypeInfo {
     return typeArgumentsMap;
   }
 
+  List<TypeInfo> plugins;
+
   Future<List<String>> generateInterceptor() async {
     List<String> lines = [];
 
@@ -331,7 +334,7 @@ class TypeInfo {
 
     //lines.add("//config: ${json.encode(typeConfig)}");
 
-    List<TypeInfo> plugins = typeMap.getPluginsForType(this);
+    plugins = typeMap.getPluginsForType(this);
 
     var typeArgsList = element.typeParameters.map((e) {
       return e.name + (e.bound != null ? " extends " + (new TypeInfo.fromType(this.typeMap, e.bound, this.typeArgumentsMap())).fullName : '');
@@ -341,7 +344,7 @@ class TypeInfo {
     var shortArgs = element.typeParameters.isNotEmpty ? "<${element.typeParameters.map((e) => e.name).join(',')}>" : '';
 
 
-    lines.add('class \$$flatName$typeArgs extends $displayName$shortArgs {');
+    lines.add('class \$$flatName$typeArgs extends $displayName$shortArgs implements Pluggable {');
 
     for (var p in plugins) {
       lines.add('${p.fullName} ${p.flatName[0].toLowerCase()}${p.flatName.substring(1)};');
@@ -390,8 +393,8 @@ class TypeInfo {
       lines.add("if (T == ${p.fullName}) {");
       lines.add("return ${p.flatName[0].toLowerCase()}${p.flatName.substring(1)} as T;");
       lines.add("}");
-      lines.add("return null;");
     }
+    lines.add("return null;");
     lines.add("}");
 
     allFields().forEach((fieldElement){
@@ -407,11 +410,10 @@ class TypeInfo {
     });
 
     allMethods().forEach((methodElement){
-      if (elementInjectionType(methodElement) == '@Factory' ||
-        elementInjectionType(methodElement) == '@SubtypeFactory' ||
-        elementInjectionType(methodElement) == '@InjectSubtypesNames') {
-        TypeInfo returnType = new TypeInfo.fromType(typeMap, methodElement.returnType, typeArgumentsMap());
+      List<String> methodLines = generateMethodOverride(methodElement);
+      if (methodLines.length > 0) {
 
+        TypeInfo returnType = new TypeInfo.fromType(typeMap, methodElement.returnType, typeArgumentsMap());
         var typeArgsList = methodElement.typeParameters.map((e) {
           return e.name + (e.bound != null ? " extends " + (new TypeInfo.fromType(this.typeMap, e.bound, this.typeArgumentsMap())).fullName : '');
         }).join(',');
@@ -424,101 +426,10 @@ class TypeInfo {
         }).join(","));
 
         lines.add("){");
-
-        if (elementInjectionType(methodElement) == '@SubtypeFactory') {
-          lines.add('switch(classCode){');
-          for (var type in typeMap.getNonAbstractSubtypes(returnType)) {
-            if (type.allRequiredFields().length == methodElement.parameters.length - 1) {
-              lines.add('case \'${type.fullName}\':');
-              lines.add('return ');
-              lines.addAll(type.generateCreator());
-              lines.add(';');
-            }
-          }
-          lines.add('}');
-        } else if (elementInjectionType(methodElement) == '@InjectSubtypesNames') {
-          var bound = new TypeInfo.fromType(this.typeMap, methodElement.typeParameters[0].bound, this.typeArgumentsMap());
-          for (var type in typeMap.getNonAbstractSubtypes(bound)) {
-            lines.add('if (T == ${type.fullName}) return \'${type.fullName}\';');
-          }
-        } else {
-          var best = typeMap.getBestCandidate(returnType);
-          lines.add('//' + returnType.fullName);
-          if (best != null) {
-            lines.add('return ');
-            lines.addAll(best.generateCreator());
-            lines.add(';');
-          }
-        }
-        lines.add("}");
-      } else if (elementInjectionType(methodElement) == '@Compile') {
-        TypeInfo returnType = new TypeInfo.fromType(typeMap, methodElement.returnType, typeArgumentsMap());
-
-        lines.add("${returnType.displayName} ${methodElement.name}(");
-        lines.add(methodElement.parameters.map((mp){
-          TypeInfo parameterType = new TypeInfo.fromType(typeMap, mp.type, typeArgumentsMap());
-          return "${parameterType.displayName} ${mp.name}";
-        }).join(","));
-        lines.add("){");
-
-        //TODO: add original method ??
-
-        plugins.forEach((p){
-          p.allMethods().forEach((methodPartElement){
-            if (methodPartElement.name == methodElement.name) {
-              if (elementInjectionType(methodPartElement) == '@CompilePart') {
-                //TODO parameters
-                lines.add('' + p.flatName + '.' + methodPartElement.name + '();');
-              }
-            }
-          });
-        });
-
-        allMethods().forEach((methodPartElement){
-          if (methodPartElement.name.startsWith('_' + methodElement.name)) {
-            if (elementInjectionType(methodPartElement) == '@CompileFieldsOfType') {
-
-              String requireAnnotation = null;
-              for (var m in methodPartElement.metadata) {
-                if (m.toSource().startsWith('@AnnotatedWith(')) {
-                  requireAnnotation = '@' + m.toSource().substring(15, m.toSource().length - 1);
-                  lines.add('//' + requireAnnotation);
-                }
-              }
-
-              var fieldType = new TypeInfo.fromType(typeMap, methodPartElement.parameters.last.type, typeArgumentsMap());
-              allFields().forEach((f){
-                if (typeMap.library.typeSystem.isSubtypeOf(f.type, fieldType.type)) {
-
-                  if (requireAnnotation != null) {
-                    bool pass = false;
-                    for (var m in f.metadata) {
-                      if (m.toSource() == requireAnnotation) pass = true;
-                    }
-                    if (!pass) return;
-                  }
-
-                  //methodPartElement.accept(visitor)
-                  //new RecursiveElementVisitor();
-
-                  //methodPartElement.visitChildren(visitor);
-                  String part = methodPartElement.getSourceCode();
-                  //String part = methodPartElement.session.getParsedLibraryByElement(methodPartElement.library).getElementDeclaration(methodPartElement).node.toSource();
-                  //part = part.substring(part.indexOf('{'));
-
-                  //String part = methodPartElement.computeNode().body.toSource();
-                  part = part.replaceAll('name', '\'${f.name}\'');
-                  part = part.replaceAll('field', 'this.${f.name}');
-                  lines.add(part);
-                }
-              });
-
-            };
-          };
-        });
-        //lines.add(methodElement.computeNode().body.toSource());
+        lines.addAll(methodLines);
         lines.add("}");
       }
+
     });
 
     for (var fieldElement in allFields()) {
@@ -550,6 +461,131 @@ class TypeInfo {
 
     return lines;
   }
+
+  List<String> generateMethodOverride(MethodElement methodElement) {
+    TypeInfo returnType = new TypeInfo.fromType(typeMap, methodElement.returnType, typeArgumentsMap());
+    List<String> lines = [];
+    if (elementInjectionType(methodElement) == '@Factory' ||
+      elementInjectionType(methodElement) == '@SubtypeFactory' ||
+      elementInjectionType(methodElement) == '@InjectSubtypesNames') {
+
+      if (elementInjectionType(methodElement) == '@SubtypeFactory') {
+        if ((methodElement.parameters[0].name != 'className') ||
+            (methodElement.parameters[0].type.name != 'String')) {
+          throw new Exception('SubtypeFactory first argument needs to be named className and be of type String');
+        }
+        lines.add('switch(className){');
+        for (var type in typeMap.getNonAbstractSubtypes(returnType)) {
+          if (type.allRequiredFields().length == methodElement.parameters.length - 1) {
+            lines.add('case \'${type.fullName}\':');
+            lines.add('return ');
+            lines.addAll(type.generateCreator());
+            lines.add(';');
+          }
+        }
+        lines.add('}');
+      } else if (elementInjectionType(methodElement) == '@InjectSubtypesNames') {
+        var bound = new TypeInfo.fromType(this.typeMap, methodElement.typeParameters[0].bound, this.typeArgumentsMap());
+        for (var type in typeMap.getNonAbstractSubtypes(bound)) {
+          lines.add('if (T == ${type.fullName}) return \'${type.fullName}\';');
+        }
+      } else {
+        var best = typeMap.getBestCandidate(returnType);
+        lines.add('//' + returnType.fullName);
+        if (best != null) {
+          lines.add('return ');
+          lines.addAll(best.generateCreator());
+          lines.add(';');
+        }
+      }
+    } else if (elementInjectionType(methodElement) == '@Compile') {
+
+      //TODO: add original method ??
+      allMethods().forEach((methodPartElement){
+        if (methodPartElement.name.startsWith('_' + methodElement.name)) {
+          if (elementInjectionType(methodPartElement) == '@CompilePart') {
+            String part = methodPartElement.getSourceCode();
+            lines.add(part);
+          } else if (elementInjectionType(methodPartElement) == '@CompileFieldsOfType') {
+
+            String requireAnnotation = null;
+            for (var m in methodPartElement.metadata) {
+              if (m.toSource().startsWith('@AnnotatedWith(')) {
+                requireAnnotation = '@' + m.toSource().substring(15, m.toSource().length - 1);
+                lines.add('//' + requireAnnotation);
+              }
+            }
+
+            var fieldType = new TypeInfo.fromType(typeMap, methodPartElement.parameters.last.type, typeArgumentsMap());
+            allFields().forEach((f){
+              if (typeMap.library.typeSystem.isSubtypeOf(f.type, fieldType.type)) {
+
+                if (requireAnnotation != null) {
+                  bool pass = false;
+                  for (var m in f.metadata) {
+                    if (m.toSource() == requireAnnotation) pass = true;
+                  }
+                  if (!pass) return;
+                }
+
+                String part = methodPartElement.getSourceCode();
+                part = part.replaceAll('name', '\'${f.name}\'');
+                part = part.replaceAll('field', 'this.${f.name}');
+                lines.add(part);
+              }
+            });
+
+          };
+        };
+      });
+      //lines.add(methodElement.computeNode().body.toSource());
+    } else {
+      //check if method has any plugins
+
+      Map<MethodElement, TypeInfo> beforePlugins = {};
+      Map<MethodElement, TypeInfo> afterPlugins = {};
+      plugins.forEach((p){
+        p.allMethods().forEach((pluginMethodElement){
+          if (elementInjectionType(pluginMethodElement) == '@MethodPlugin') {
+            if (pluginMethodElement.name == "before" + methodElement.name.substring(0,1).toUpperCase() + methodElement.name.substring(1)) {
+              beforePlugins[pluginMethodElement] = p;
+            } else if (pluginMethodElement.name == "after" + methodElement.name.substring(0,1).toUpperCase() + methodElement.name.substring(1)) {
+              afterPlugins[pluginMethodElement] = p;
+            }
+          }
+        });
+      });
+
+      String paramsStr = methodElement.parameters.map((mp) => mp.name).join(",");
+      String beforeArgsStr = '';
+      if (beforePlugins.length > 0) {
+        lines.add('List<dynamic> args = [$paramsStr];');
+        int i = 0;
+        beforeArgsStr = methodElement.parameters.map((mp) => "args[${i++}]").join(',');
+      }
+      for (var pluginMethod in beforePlugins.keys) {
+        lines.add('args = ${beforePlugins[pluginMethod].flatName}.${pluginMethod.name}($beforeArgsStr);');
+      }
+      if (beforePlugins.length > 0) {
+        int i = 0;
+        methodElement.parameters.forEach((mp) {
+          lines.add('${mp.name} = args[$i];');
+          i++;
+        });
+      }
+      if (beforePlugins.length + afterPlugins.length > 0) {
+        lines.add('var ret = super.${methodElement.name}($paramsStr);');
+      }
+      for (var pluginMethod in afterPlugins.keys) {
+        lines.add('ret = ${afterPlugins[pluginMethod].flatName}.${pluginMethod.name}(ret);');
+      }
+      if (beforePlugins.length + afterPlugins.length > 0) {
+        lines.add('return ret;');
+      }
+    }
+    return lines;
+  }
+
 }
 
 class TypeMap {

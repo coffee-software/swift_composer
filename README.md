@@ -23,6 +23,8 @@ dependencies:
 
 2) declare a compiled part in your final application code:
 ```
+import 'package:swift_composer/swift_composer.dart';
+
 import 'package:some_plugin';
 
 part 'main.c.dart';
@@ -199,12 +201,10 @@ Now, calling `toJson` should return something like:
 }
 ```
 
-We can also extend / change decorated classes behaviors using `Plugable` and
-`Plugin` annotations.
+We can also extend / change decorated classes behaviors using `MethodPlugin` annotations.
 
-With this customization point defined in parent class:
+Every public method in parent class:
 ```
-  @Plugable
   bool validate(int foo, int bar) {
     return foo > bar;
   }
@@ -212,13 +212,14 @@ With this customization point defined in parent class:
 
 Plugin class can customize behavior of such methods:
 ```
-  @Plugin
-  beforeValidate(int foo, int bar) {
+  @MethodPlugin
+  List<dynamic> beforeValidate(int foo, int bar) {
     bar = bar + 1;
+    return [foo, bar];
   }
 
-  @Plugin
-  afterValidate(bool ret) {
+  @MethodPlugin
+  bool afterValidate(bool ret) {
     return !ret;
   }
 ```

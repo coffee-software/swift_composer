@@ -13,7 +13,7 @@ part of 'plugins.dart';
 //interceptor for module_test1.Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $module_test1_Foo extends module_test1.Foo {
+class $module_test1_Foo extends module_test1.Foo implements Pluggable {
   SimplePlugin simplePlugin;
   MoreComplexPlugin moreComplexPlugin;
   $module_test1_Foo() {
@@ -24,7 +24,6 @@ class $module_test1_Foo extends module_test1.Foo {
     if (T == SimplePlugin) {
       return simplePlugin as T;
     }
-    return null;
     if (T == MoreComplexPlugin) {
       return moreComplexPlugin as T;
     }
@@ -41,7 +40,8 @@ class $module_test1_Foo extends module_test1.Foo {
 //can be singleton: TRUE
 //parent: FooChild [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $module_test1_FooChild extends module_test1.FooChild {
+class $module_test1_FooChild extends module_test1.FooChild
+    implements Pluggable {
   SimplePlugin simplePlugin;
   MoreComplexPlugin moreComplexPlugin;
   $module_test1_FooChild() {
@@ -52,7 +52,6 @@ class $module_test1_FooChild extends module_test1.FooChild {
     if (T == SimplePlugin) {
       return simplePlugin as T;
     }
-    return null;
     if (T == MoreComplexPlugin) {
       return moreComplexPlugin as T;
     }
@@ -71,7 +70,8 @@ class $module_test1_FooChild extends module_test1.FooChild {
 //can be singleton: FALSE
 //parent: FooChild2 [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $module_test1_FooChild2 extends module_test1.FooChild2 {
+class $module_test1_FooChild2 extends module_test1.FooChild2
+    implements Pluggable {
   SimplePlugin simplePlugin;
   MoreComplexPlugin moreComplexPlugin;
   $module_test1_FooChild2(requiredString) {
@@ -84,7 +84,6 @@ class $module_test1_FooChild2 extends module_test1.FooChild2 {
     if (T == SimplePlugin) {
       return simplePlugin as T;
     }
-    return null;
     if (T == MoreComplexPlugin) {
       return moreComplexPlugin as T;
     }
@@ -100,9 +99,12 @@ class $module_test1_FooChild2 extends module_test1.FooChild2 {
 //interceptor for module_test1.Bar
 //can be singleton: TRUE
 //parent: Bar [@bool get Compose]
-class $module_test1_Bar extends module_test1.Bar {
+class $module_test1_Bar extends module_test1.Bar implements Pluggable {
   $module_test1_Bar() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarField";
   List<String> get classNames => [];
 }
@@ -112,9 +114,13 @@ class $module_test1_Bar extends module_test1.Bar {
 //can be singleton: TRUE
 //parent: BarChild [@bool get Compose]
 //parent: Bar [@bool get Compose]
-class $module_test1_BarChild extends module_test1.BarChild {
+class $module_test1_BarChild extends module_test1.BarChild
+    implements Pluggable {
   $module_test1_BarChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarChildField";
   List<String> get classNames => ['module_test1.BarChild'];
 }
@@ -123,9 +129,12 @@ class $module_test1_BarChild extends module_test1.BarChild {
 //interceptor for module_test1.SimpleGeneric
 //can be singleton: FALSE
 //parent: SimpleGeneric [@bool get Compose]
-class $module_test1_SimpleGeneric<T> extends module_test1.SimpleGeneric<T> {
+class $module_test1_SimpleGeneric<T> extends module_test1.SimpleGeneric<T>
+    implements Pluggable {
   $module_test1_SimpleGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [SimplePlugin]
@@ -134,12 +143,14 @@ class $module_test1_SimpleGeneric<T> extends module_test1.SimpleGeneric<T> {
 //can be singleton: FALSE
 //parent: SimplePlugin [@bool get Compose]
 //parent: TypePlugin [@bool get ComposeSubtypes]
-class $SimplePlugin extends SimplePlugin {
+class $SimplePlugin extends SimplePlugin implements Pluggable {
   $SimplePlugin(parent) {
 //T
     this.parent = parent;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [MoreComplexPlugin]
@@ -148,12 +159,15 @@ class $SimplePlugin extends SimplePlugin {
 //can be singleton: FALSE
 //parent: MoreComplexPlugin [@bool get Compose]
 //parent: TypePlugin [@bool get ComposeSubtypes]
-class $MoreComplexPlugin extends MoreComplexPlugin {
+class $MoreComplexPlugin extends MoreComplexPlugin implements Pluggable {
   $MoreComplexPlugin(parent) {
 //T
     this.parent = parent;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   module_test1.Bar get bar => $om.module_test1_Bar;
 }
 
@@ -192,4 +206,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 5ms
+//generated in 4ms

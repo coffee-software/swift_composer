@@ -13,9 +13,12 @@ part of 'subtypes.dart';
 //interceptor for module_test1.Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $module_test1_Foo extends module_test1.Foo {
+class $module_test1_Foo extends module_test1.Foo implements Pluggable {
   $module_test1_Foo() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "module_test1.Foo";
   String get stringField => "FooField";
   int get integerField => 124;
@@ -26,9 +29,13 @@ class $module_test1_Foo extends module_test1.Foo {
 //can be singleton: TRUE
 //parent: FooChild [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $module_test1_FooChild extends module_test1.FooChild {
+class $module_test1_FooChild extends module_test1.FooChild
+    implements Pluggable {
   $module_test1_FooChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "module_test1.FooChild";
   String get stringField => "FooChildField";
   int get integerField => 124;
@@ -41,12 +48,16 @@ class $module_test1_FooChild extends module_test1.FooChild {
 //can be singleton: FALSE
 //parent: FooChild2 [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $module_test1_FooChild2 extends module_test1.FooChild2 {
+class $module_test1_FooChild2 extends module_test1.FooChild2
+    implements Pluggable {
   $module_test1_FooChild2(requiredString) {
 //String
     this.requiredString = requiredString;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "module_test1.FooChild2";
   String get stringField => "FooChild2Field";
   int get integerField => 124;
@@ -56,9 +67,12 @@ class $module_test1_FooChild2 extends module_test1.FooChild2 {
 //interceptor for module_test1.Bar
 //can be singleton: TRUE
 //parent: Bar [@bool get Compose]
-class $module_test1_Bar extends module_test1.Bar {
+class $module_test1_Bar extends module_test1.Bar implements Pluggable {
   $module_test1_Bar() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarField";
   List<String> get classNames => [];
 }
@@ -68,9 +82,13 @@ class $module_test1_Bar extends module_test1.Bar {
 //can be singleton: TRUE
 //parent: BarChild [@bool get Compose]
 //parent: Bar [@bool get Compose]
-class $module_test1_BarChild extends module_test1.BarChild {
+class $module_test1_BarChild extends module_test1.BarChild
+    implements Pluggable {
   $module_test1_BarChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarChildField";
   List<String> get classNames => ['module_test1.BarChild'];
 }
@@ -79,22 +97,28 @@ class $module_test1_BarChild extends module_test1.BarChild {
 //interceptor for module_test1.SimpleGeneric
 //can be singleton: FALSE
 //parent: SimpleGeneric [@bool get Compose]
-class $module_test1_SimpleGeneric<T> extends module_test1.SimpleGeneric<T> {
+class $module_test1_SimpleGeneric<T> extends module_test1.SimpleGeneric<T>
+    implements Pluggable {
   $module_test1_SimpleGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [Container]
 //interceptor for Container
 //can be singleton: TRUE
 //parent: Container [@bool get Compose]
-class $Container extends Container {
+class $Container extends Container implements Pluggable {
   $Container() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   Map<String, module_test1.Foo> get instances =>
       $om.instancesOfmodule_test1_Foo;
-  module_test1.Foo factory(String classCode) {
-    switch (classCode) {
+  module_test1.Foo factory(String className) {
+    switch (className) {
       case 'module_test1.Foo':
         return new $module_test1_Foo();
       case 'module_test1.FooChild':
@@ -153,4 +177,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 5ms
+//generated in 23ms

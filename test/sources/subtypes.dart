@@ -10,6 +10,6 @@ abstract class Container {
   Map<String, module_test1.Foo> get instances;
 
   @SubtypeFactory
-  module_test1.Foo factory(String classCode);
+  module_test1.Foo factory(String className);
 
 }

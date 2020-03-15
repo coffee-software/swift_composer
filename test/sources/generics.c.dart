@@ -13,9 +13,12 @@ part of 'generics.dart';
 //interceptor for module_test.Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $module_test_Foo extends module_test.Foo {
+class $module_test_Foo extends module_test.Foo implements Pluggable {
   $module_test_Foo() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "module_test.Foo";
   String get stringField => "FooField";
   int get integerField => 124;
@@ -26,9 +29,12 @@ class $module_test_Foo extends module_test.Foo {
 //can be singleton: TRUE
 //parent: FooChild [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $module_test_FooChild extends module_test.FooChild {
+class $module_test_FooChild extends module_test.FooChild implements Pluggable {
   $module_test_FooChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "module_test.FooChild";
   String get stringField => "FooChildField";
   int get integerField => 124;
@@ -41,12 +47,16 @@ class $module_test_FooChild extends module_test.FooChild {
 //can be singleton: FALSE
 //parent: FooChild2 [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $module_test_FooChild2 extends module_test.FooChild2 {
+class $module_test_FooChild2 extends module_test.FooChild2
+    implements Pluggable {
   $module_test_FooChild2(requiredString) {
 //String
     this.requiredString = requiredString;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "module_test.FooChild2";
   String get stringField => "FooChild2Field";
   int get integerField => 124;
@@ -56,9 +66,12 @@ class $module_test_FooChild2 extends module_test.FooChild2 {
 //interceptor for module_test.Bar
 //can be singleton: TRUE
 //parent: Bar [@bool get Compose]
-class $module_test_Bar extends module_test.Bar {
+class $module_test_Bar extends module_test.Bar implements Pluggable {
   $module_test_Bar() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarField";
   List<String> get classNames => [];
 }
@@ -68,9 +81,12 @@ class $module_test_Bar extends module_test.Bar {
 //can be singleton: TRUE
 //parent: BarChild [@bool get Compose]
 //parent: Bar [@bool get Compose]
-class $module_test_BarChild extends module_test.BarChild {
+class $module_test_BarChild extends module_test.BarChild implements Pluggable {
   $module_test_BarChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarChildField";
   List<String> get classNames => ['module_test.BarChild'];
 }
@@ -79,18 +95,24 @@ class $module_test_BarChild extends module_test.BarChild {
 //interceptor for module_test.SimpleGeneric
 //can be singleton: FALSE
 //parent: SimpleGeneric [@bool get Compose]
-class $module_test_SimpleGeneric<T> extends module_test.SimpleGeneric<T> {
+class $module_test_SimpleGeneric<T> extends module_test.SimpleGeneric<T>
+    implements Pluggable {
   $module_test_SimpleGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [Generic]
 //interceptor for Generic
 //can be singleton: FALSE
 //parent: Generic [@bool get Compose]
-class $Generic<T, F extends module_test.Foo> extends Generic<T, F> {
+class $Generic<T, F extends module_test.Foo> extends Generic<T, F>
+    implements Pluggable {
   $Generic() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [Generic2]
@@ -100,9 +122,11 @@ class $Generic<T, F extends module_test.Foo> extends Generic<T, F> {
 //can be singleton: FALSE
 //parent: Generic2 [@bool get Compose]
 //parent: Generic [@bool get Compose]
-class $Generic2<A> extends Generic2<A> {
+class $Generic2<A> extends Generic2<A> implements Pluggable {
   $Generic2() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [TypedGeneric2]
@@ -114,9 +138,11 @@ class $Generic2<A> extends Generic2<A> {
 //parent: TypedGeneric2 [@bool get Compose]
 //parent: Generic2 [@bool get Compose]
 //parent: Generic [@bool get Compose]
-class $TypedGeneric2 extends TypedGeneric2 {
+class $TypedGeneric2 extends TypedGeneric2 implements Pluggable {
   $TypedGeneric2() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 class $ObjectManager {
@@ -162,4 +188,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 7ms
+//generated in 4ms

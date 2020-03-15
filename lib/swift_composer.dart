@@ -26,19 +26,18 @@ const SubtypeFactory = true;
 
 const Template = true;
 
-const Plugable = true;
-const Plugin = true;
+const MethodPlugin = true;
 
 abstract class Pluggable {
   T plugin<T>();
 }
 
 @ComposeSubtypes
-abstract class TypePlugin<T extends Pluggable> {
+abstract class TypePlugin<T> {
   @Require
   T parent;
 
   ST sibling<ST>() {
-    return parent.plugin<ST>();
+    return (parent as Pluggable).plugin<ST>();
   }
 }

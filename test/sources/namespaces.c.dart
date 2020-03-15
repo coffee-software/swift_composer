@@ -13,9 +13,12 @@ part of 'namespaces.dart';
 //interceptor for test_module1.Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $test_module1_Foo extends test_module1.Foo {
+class $test_module1_Foo extends test_module1.Foo implements Pluggable {
   $test_module1_Foo() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "test_module1.Foo";
   String get stringField => "FooField";
   int get integerField => 124;
@@ -26,9 +29,13 @@ class $test_module1_Foo extends test_module1.Foo {
 //can be singleton: TRUE
 //parent: FooChild [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $test_module1_FooChild extends test_module1.FooChild {
+class $test_module1_FooChild extends test_module1.FooChild
+    implements Pluggable {
   $test_module1_FooChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "test_module1.FooChild";
   String get stringField => "FooChildField";
   int get integerField => 124;
@@ -41,12 +48,16 @@ class $test_module1_FooChild extends test_module1.FooChild {
 //can be singleton: FALSE
 //parent: FooChild2 [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $test_module1_FooChild2 extends test_module1.FooChild2 {
+class $test_module1_FooChild2 extends test_module1.FooChild2
+    implements Pluggable {
   $test_module1_FooChild2(requiredString) {
 //String
     this.requiredString = requiredString;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "test_module1.FooChild2";
   String get stringField => "FooChild2Field";
   int get integerField => 124;
@@ -56,9 +67,12 @@ class $test_module1_FooChild2 extends test_module1.FooChild2 {
 //interceptor for test_module1.Bar
 //can be singleton: TRUE
 //parent: Bar [@bool get Compose]
-class $test_module1_Bar extends test_module1.Bar {
+class $test_module1_Bar extends test_module1.Bar implements Pluggable {
   $test_module1_Bar() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarField";
   List<String> get classNames => [];
 }
@@ -68,9 +82,13 @@ class $test_module1_Bar extends test_module1.Bar {
 //can be singleton: TRUE
 //parent: BarChild [@bool get Compose]
 //parent: Bar [@bool get Compose]
-class $test_module1_BarChild extends test_module1.BarChild {
+class $test_module1_BarChild extends test_module1.BarChild
+    implements Pluggable {
   $test_module1_BarChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarChildField";
   List<String> get classNames => ['test_module1.BarChild'];
 }
@@ -79,18 +97,24 @@ class $test_module1_BarChild extends test_module1.BarChild {
 //interceptor for test_module1.SimpleGeneric
 //can be singleton: FALSE
 //parent: SimpleGeneric [@bool get Compose]
-class $test_module1_SimpleGeneric<T> extends test_module1.SimpleGeneric<T> {
+class $test_module1_SimpleGeneric<T> extends test_module1.SimpleGeneric<T>
+    implements Pluggable {
   $test_module1_SimpleGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [test_module2.Foo]
 //interceptor for test_module2.Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $test_module2_Foo extends test_module2.Foo {
+class $test_module2_Foo extends test_module2.Foo implements Pluggable {
   $test_module2_Foo() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "test_module2.Foo";
   String get stringField2 => null;
 }
@@ -100,9 +124,11 @@ class $test_module2_Foo extends test_module2.Foo {
 //can be singleton: FALSE
 //parent: ComplexGeneric [@bool get Compose]
 class $test_module2_ComplexGeneric<A, B>
-    extends test_module2.ComplexGeneric<A, B> {
+    extends test_module2.ComplexGeneric<A, B> implements Pluggable {
   $test_module2_ComplexGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [test_module2.SuperComplexGeneric]
@@ -113,16 +139,18 @@ class $test_module2_ComplexGeneric<A, B>
 //parent: SuperComplexGeneric [@bool get Compose]
 //parent: ComplexGeneric [@bool get Compose]
 class $test_module2_SuperComplexGeneric<A, B>
-    extends test_module2.SuperComplexGeneric<A, B> {
+    extends test_module2.SuperComplexGeneric<A, B> implements Pluggable {
   $test_module2_SuperComplexGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [Container]
 //interceptor for Container
 //can be singleton: TRUE
 //parent: Container [@bool get Compose]
-class $Container extends Container {
+class $Container extends Container implements Pluggable {
   $Container() {
 //ComplexGeneric<Foo, Bar>
 //create
@@ -133,14 +161,16 @@ class $Container extends Container {
 //SuperComplexGeneric<List<Bar>, SimpleGeneric<String>>
 //create
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [GenericContainer]
 //interceptor for GenericContainer
 //can be singleton: FALSE
 //parent: GenericContainer [@bool get Compose]
-class $GenericContainer<T> extends GenericContainer<T> {
+class $GenericContainer<T> extends GenericContainer<T> implements Pluggable {
   $GenericContainer() {
 //ComplexGeneric<T, Bar>
 //create
@@ -151,7 +181,9 @@ class $GenericContainer<T> extends GenericContainer<T> {
 //SuperComplexGeneric<T, SimpleGeneric<String>>
 //create
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [FooContainer]
@@ -160,7 +192,7 @@ class $GenericContainer<T> extends GenericContainer<T> {
 //can be singleton: TRUE
 //parent: FooContainer [@bool get Compose]
 //parent: GenericContainer [@bool get Compose]
-class $FooContainer extends FooContainer {
+class $FooContainer extends FooContainer implements Pluggable {
   $FooContainer() {
 //ComplexGeneric<T, Bar>
 //create
@@ -171,7 +203,9 @@ class $FooContainer extends FooContainer {
 //SuperComplexGeneric<T, SimpleGeneric<String>>
 //create
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 class $ObjectManager {
@@ -233,4 +267,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 13ms
+//generated in 10ms

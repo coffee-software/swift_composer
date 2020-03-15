@@ -23,7 +23,7 @@ abstract class Container {
     Complex createComplex(String requiredString, module_test.Foo requiredFoo);
 
     @SubtypeFactory
-    module_test.Foo createSubFoo(String classCode);
+    module_test.Foo createSubFoo(String className);
 
     void test(){
       module_test.Foo x1 = createFoo();

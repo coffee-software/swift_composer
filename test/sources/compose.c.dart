@@ -13,9 +13,12 @@ part of 'compose.dart';
 //interceptor for m1.Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $m1_Foo extends m1.Foo {
+class $m1_Foo extends m1.Foo implements Pluggable {
   $m1_Foo() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "m1.Foo";
   String get stringField => "FooField";
   int get integerField => 124;
@@ -26,9 +29,12 @@ class $m1_Foo extends m1.Foo {
 //can be singleton: TRUE
 //parent: FooChild [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $m1_FooChild extends m1.FooChild {
+class $m1_FooChild extends m1.FooChild implements Pluggable {
   $m1_FooChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "m1.FooChild";
   String get stringField => "FooChildField";
   int get integerField => 124;
@@ -41,12 +47,15 @@ class $m1_FooChild extends m1.FooChild {
 //can be singleton: FALSE
 //parent: FooChild2 [@bool get Compose]
 //parent: Foo [@bool get Compose]
-class $m1_FooChild2 extends m1.FooChild2 {
+class $m1_FooChild2 extends m1.FooChild2 implements Pluggable {
   $m1_FooChild2(requiredString) {
 //String
     this.requiredString = requiredString;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "m1.FooChild2";
   String get stringField => "FooChild2Field";
   int get integerField => 124;
@@ -56,9 +65,12 @@ class $m1_FooChild2 extends m1.FooChild2 {
 //interceptor for m1.Bar
 //can be singleton: TRUE
 //parent: Bar [@bool get Compose]
-class $m1_Bar extends m1.Bar {
+class $m1_Bar extends m1.Bar implements Pluggable {
   $m1_Bar() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarField";
   List<String> get classNames => [];
 }
@@ -68,9 +80,12 @@ class $m1_Bar extends m1.Bar {
 //can be singleton: TRUE
 //parent: BarChild [@bool get Compose]
 //parent: Bar [@bool get Compose]
-class $m1_BarChild extends m1.BarChild {
+class $m1_BarChild extends m1.BarChild implements Pluggable {
   $m1_BarChild() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get stringField => "BarChildField";
   List<String> get classNames => ['m1.BarChild'];
 }
@@ -79,18 +94,23 @@ class $m1_BarChild extends m1.BarChild {
 //interceptor for m1.SimpleGeneric
 //can be singleton: FALSE
 //parent: SimpleGeneric [@bool get Compose]
-class $m1_SimpleGeneric<T> extends m1.SimpleGeneric<T> {
+class $m1_SimpleGeneric<T> extends m1.SimpleGeneric<T> implements Pluggable {
   $m1_SimpleGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [Foo]
 //interceptor for Foo
 //can be singleton: TRUE
 //parent: Foo [@bool get Compose]
-class $Foo extends Foo {
+class $Foo extends Foo implements Pluggable {
   $Foo() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   String get className => "Foo";
   String get stringField2 => null;
 }
@@ -99,9 +119,11 @@ class $Foo extends Foo {
 //interceptor for ComplexGeneric
 //can be singleton: FALSE
 //parent: ComplexGeneric [@bool get Compose]
-class $ComplexGeneric<A, B> extends ComplexGeneric<A, B> {
+class $ComplexGeneric<A, B> extends ComplexGeneric<A, B> implements Pluggable {
   $ComplexGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [SuperComplexGeneric]
@@ -111,16 +133,19 @@ class $ComplexGeneric<A, B> extends ComplexGeneric<A, B> {
 //can be singleton: FALSE
 //parent: SuperComplexGeneric [@bool get Compose]
 //parent: ComplexGeneric [@bool get Compose]
-class $SuperComplexGeneric<A, B> extends SuperComplexGeneric<A, B> {
+class $SuperComplexGeneric<A, B> extends SuperComplexGeneric<A, B>
+    implements Pluggable {
   $SuperComplexGeneric() {}
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 //interceptor for [Container]
 //interceptor for Container
 //can be singleton: FALSE
 //parent: Container [@bool get Compose]
-class $Container extends Container {
+class $Container extends Container implements Pluggable {
   $Container(fooRequired, genericRequired) {
 //SimpleGeneric<Foo>
 //Foo
@@ -133,7 +158,10 @@ class $Container extends Container {
 //SimpleGeneric<Foo>
     this.genericRequired = genericRequired;
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   m1.Foo get fooInjected => $om.m1_Foo;
 }
 
@@ -147,11 +175,14 @@ class $Container extends Container {
 //parent: GenericTypedWithFoo [@bool get Compose]
 //parent: AbstractGeneric []
 //parent: GenericInterface []
-class $GenericTypedWithFoo extends GenericTypedWithFoo {
+class $GenericTypedWithFoo extends GenericTypedWithFoo implements Pluggable {
   $GenericTypedWithFoo() {
 //SimpleGeneric<T>
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
+
   m1.Foo get element => $om.m1_Foo;
 }
 
@@ -162,7 +193,7 @@ class $GenericTypedWithFoo extends GenericTypedWithFoo {
 //can be singleton: TRUE
 //parent: ContainerFoo [@bool get Compose]
 //parent: GenericContainer []
-class $ContainerFoo extends ContainerFoo {
+class $ContainerFoo extends ContainerFoo implements Pluggable {
   $ContainerFoo() {
 //AbstractGeneric<T>
 //create
@@ -174,7 +205,9 @@ class $ContainerFoo extends ContainerFoo {
 //create
     this.child = new $m1_Foo();
   }
-  T plugin<T>() {}
+  T plugin<T>() {
+    return null;
+  }
 }
 
 class $ObjectManager {
@@ -236,4 +269,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 10ms
+//generated in 8ms
