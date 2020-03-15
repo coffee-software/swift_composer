@@ -7,6 +7,7 @@ part of 'fields.dart';
 // **************************************************************************
 
 //no interceptor for [AnnotatedWith]
+//no interceptor for [Pluggable]
 //no interceptor for [TypePlugin]
 //interceptor for [module_test.Foo]
 //interceptor for module_test.Foo
@@ -232,4 +233,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 48ms
+//generated in 21ms

@@ -7,6 +7,7 @@ part of 'compose.dart';
 // **************************************************************************
 
 //no interceptor for [AnnotatedWith]
+//no interceptor for [Pluggable]
 //no interceptor for [TypePlugin]
 //interceptor for [m1.Foo]
 //interceptor for m1.Foo
@@ -235,4 +236,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 16ms
+//generated in 10ms

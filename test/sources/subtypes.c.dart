@@ -7,6 +7,7 @@ part of 'subtypes.dart';
 // **************************************************************************
 
 //no interceptor for [AnnotatedWith]
+//no interceptor for [Pluggable]
 //no interceptor for [TypePlugin]
 //interceptor for [module_test1.Foo]
 //interceptor for module_test1.Foo
@@ -152,4 +153,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 7ms
+//generated in 5ms

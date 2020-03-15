@@ -7,6 +7,7 @@ part of 'plugins.dart';
 // **************************************************************************
 
 //no interceptor for [AnnotatedWith]
+//no interceptor for [Pluggable]
 //no interceptor for [TypePlugin]
 //interceptor for [module_test1.Foo]
 //interceptor for module_test1.Foo
@@ -23,9 +24,11 @@ class $module_test1_Foo extends module_test1.Foo {
     if (T == SimplePlugin) {
       return simplePlugin as T;
     }
+    return null;
     if (T == MoreComplexPlugin) {
       return moreComplexPlugin as T;
     }
+    return null;
   }
 
   String get className => "module_test1.Foo";
@@ -49,9 +52,11 @@ class $module_test1_FooChild extends module_test1.FooChild {
     if (T == SimplePlugin) {
       return simplePlugin as T;
     }
+    return null;
     if (T == MoreComplexPlugin) {
       return moreComplexPlugin as T;
     }
+    return null;
   }
 
   String get className => "module_test1.FooChild";
@@ -79,9 +84,11 @@ class $module_test1_FooChild2 extends module_test1.FooChild2 {
     if (T == SimplePlugin) {
       return simplePlugin as T;
     }
+    return null;
     if (T == MoreComplexPlugin) {
       return moreComplexPlugin as T;
     }
+    return null;
   }
 
   String get className => "module_test1.FooChild2";
@@ -185,4 +192,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 3ms
+//generated in 5ms

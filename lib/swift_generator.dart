@@ -65,7 +65,7 @@ class TypeInfo {
     //resolveToBound <<
     if (type.displayName.endsWith('>')) {
       for (var arg in (type as ParameterizedType).typeArguments) {
-        typeArguments.add(new TypeInfo.fromType(typeMap, arg, typeArgumentsMap));
+        typeArguments.add(TypeInfo.fromType(typeMap, arg, typeArgumentsMap));
       }
     }
   }
@@ -135,7 +135,7 @@ class TypeInfo {
 
   String elementInjectionType(Element element) {
     for (var metadataElement in element.metadata) {
-      if (decorators.indexOf(metadataElement.toSource()) >= 0) {
+      if (decorators.contains(metadataElement.toSource())) {
         return metadataElement.toSource();
       }
     }
@@ -384,12 +384,13 @@ class TypeInfo {
     }
     lines.add('}');
 
-
+    //TODO if pluggable
     lines.add("T plugin<T>() {");
     for (var p in plugins) {
       lines.add("if (T == ${p.fullName}) {");
       lines.add("return ${p.flatName[0].toLowerCase()}${p.flatName.substring(1)} as T;");
       lines.add("}");
+      lines.add("return null;");
     }
     lines.add("}");
 

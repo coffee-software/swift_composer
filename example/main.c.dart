@@ -35,6 +35,7 @@ class $module_fruit_Fruit extends module_fruit.Fruit {
     if (T == module_price.FruitPlugin) {
       return module_price_FruitPlugin as T;
     }
+    return null;
   }
 
   String get className => "module_fruit.Fruit";
@@ -79,6 +80,7 @@ class $module_banana_Banana extends module_banana.Banana {
     if (T == module_price.FruitPlugin) {
       return module_price_FruitPlugin as T;
     }
+    return null;
   }
 
   String get className => "module_banana.Banana";
@@ -154,4 +156,4 @@ class $ObjectManager {
 }
 
 $ObjectManager $om = new $ObjectManager();
-//generated in 35ms
+//generated in 30ms

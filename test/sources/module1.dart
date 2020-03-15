@@ -3,7 +3,7 @@ library test_module1;
 import 'package:swift_composer/swift_composer.dart';
 
 @Compose
-abstract class Foo {
+abstract class Foo implements Pluggable {
 
   @InjectClassName
   String get className;

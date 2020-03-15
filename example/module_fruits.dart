@@ -11,7 +11,7 @@ abstract class AllAvailableFruits {
 }
 
 @Compose
-abstract class Fruit {
+abstract class Fruit implements Pluggable {
 
   @InjectClassName
   String get className;

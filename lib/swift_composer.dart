@@ -23,46 +23,22 @@ class AnnotatedWith {
 
 const Factory = true;
 const SubtypeFactory = true;
+
 const Template = true;
 
 const Plugable = true;
 const Plugin = true;
 
-//typedef S TypeCreator<S>();
-/*
-class SubtypeOf<T> {
-  TypeCreator<T> _creator;
-  List<dynamic> metadata;
-  SubtypeOf(this._creator, this.metadata);
-
-  T _instance;
-  T get instance => _instance == null ? _instance = _creator() : _instance;
-  T createNew() => _creator();
-}*/
-
-/*
-abstract class Factory<T> {
-  T faktorius;
-  T createNew(List<dynamic> args);
+abstract class Pluggable {
+  T plugin<T>();
 }
-
-abstract class SubtypesOf<T> extends DelegatingMap<String, SubtypeOf<T>> {
-  final Map<String, SubtypeOf<T>> delegate = {};
-}
-
-class FieldsOfType<T> extends DelegatingMap<String, T> {
-  Map<String, T> delegate = {};
-  FieldsOfType(this.delegate);
-} */
 
 @ComposeSubtypes
-abstract class TypePlugin<T> {
+abstract class TypePlugin<T extends Pluggable> {
   @Require
   T parent;
 
-  ST sibling<ST extends TypePlugin>() {
-    //TODO
-    print(ST.hashCode);
-    return null;
+  ST sibling<ST>() {
+    return parent.plugin<ST>();
   }
 }

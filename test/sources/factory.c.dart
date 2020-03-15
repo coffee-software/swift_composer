@@ -7,6 +7,7 @@ part of 'factory.dart';
 // **************************************************************************
 
 //no interceptor for [AnnotatedWith]
+//no interceptor for [Pluggable]
 //no interceptor for [TypePlugin]
 //interceptor for [module_test.Foo]
 //interceptor for module_test.Foo
