@@ -499,7 +499,7 @@ class TypeInfo {
         }
       }
     } else if (elementInjectionType(methodElement) == '@Compile') {
-
+      lines.add('//compiled method');
       //TODO: add original method ??
       allMethods().forEach((methodPartElement){
         if (methodPartElement.name.startsWith('_' + methodElement.name)) {
@@ -573,13 +573,14 @@ class TypeInfo {
           i++;
         });
       }
+      bool isVoid = methodElement.returnType.isVoid;
       if (beforePlugins.length + afterPlugins.length > 0) {
-        lines.add('var ret = super.${methodElement.name}($paramsStr);');
+        lines.add((!isVoid ? 'var ret = ' : '') + 'super.${methodElement.name}($paramsStr);');
       }
       for (var pluginMethod in afterPlugins.keys) {
-        lines.add('ret = ${afterPlugins[pluginMethod].flatName}.${pluginMethod.name}(ret);');
+        lines.add((!isVoid ? 'ret = ' : '') + '${afterPlugins[pluginMethod].flatName}.${pluginMethod.name}(${isVoid ? '' : 'ret'});');
       }
-      if (beforePlugins.length + afterPlugins.length > 0) {
+      if (!isVoid && (beforePlugins.length + afterPlugins.length > 0)) {
         lines.add('return ret;');
       }
     }
