@@ -35,7 +35,7 @@ abstract class Pluggable {
 @ComposeSubtypes
 abstract class TypePlugin<T> {
   @Require
-  T parent;
+  late T parent;
 
   ST sibling<ST>() {
     return (parent as Pluggable).plugin<ST>();

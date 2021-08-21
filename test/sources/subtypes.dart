@@ -1,5 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
-import 'module1.dart' as module_test1;
+import '../lib/module1.dart' as module_test1;
 
 part 'subtypes.c.dart';
 

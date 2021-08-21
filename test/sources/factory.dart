@@ -1,5 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
-import 'module1.dart' as module_test;
+import '../lib/module1.dart' as module_test;
 
 import 'package:source_gen/builder.dart' as jajaja;
 
@@ -8,9 +8,9 @@ part 'factory.c.dart';
 @Compose
 abstract class Complex {
   @Require
-  String requiredString;
+  late String requiredString;
   @Require
-  module_test.Foo requiredFoo;
+  late module_test.Foo requiredFoo;
 }
 
 @Compose

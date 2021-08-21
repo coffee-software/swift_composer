@@ -1,24 +1,24 @@
 import 'package:swift_composer/swift_composer.dart';
-import 'module1.dart' as module_test;
+import '../lib/module1.dart' as module_test;
 
 part 'fields.c.dart';
 
-class Base {
+abstract class Base {
   @Create
-  module_test.Foo one;
+  late module_test.Foo one;
   @Create
-  module_test.Foo two;
+  late module_test.Foo two;
   @Create
-  module_test.FooChild three;
+  late module_test.FooChild three;
   @Create
-  module_test.BarChild bar;
+  late module_test.BarChild bar;
 }
 
 @Compose
 abstract class Container extends Base {
 
   @Create
-  module_test.Foo four;
+  late module_test.Foo four;
 
   Map toJson() {
       Map ret = new Map();
@@ -71,6 +71,6 @@ abstract class Container extends Base {
 abstract class ChildContainer extends Base {
 
   @Create
-  module_test.Foo five;
+  late module_test.Foo five;
 
 }
