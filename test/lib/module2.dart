@@ -14,14 +14,14 @@ abstract class Foo {
 
 @Compose
 abstract class ComplexGeneric<A,B> {
-  B method(A param) {
+  B? method(A param) {
     return null;
   }
 }
 
 @Compose
 abstract class SuperComplexGeneric<A, B> extends ComplexGeneric<Foo, A> {
-  A method(Foo param) {
+  A? method(Foo param) {
     B local;
     return null;
   }

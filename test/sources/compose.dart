@@ -1,6 +1,6 @@
 import 'package:swift_composer/swift_composer.dart';
-import 'module1.dart' as m1;
-import 'module2.dart';
+import '../lib/module1.dart' as m1;
+import '../lib/module2.dart';
 
 part 'compose.c.dart';
 
@@ -11,19 +11,19 @@ abstract class Container {
   m1.Foo get fooInjected;
 
   @Inject
-  m1.SimpleGeneric<m1.Foo> genericInjected;
+  m1.SimpleGeneric<m1.Foo> get genericInjected;
 
   @Create
-  m1.Foo fooCreated;
+  late m1.Foo fooCreated;
 
   @Create
-  m1.SimpleGeneric<m1.Foo> genericCreated;
+  late m1.SimpleGeneric<m1.Foo> genericCreated;
 
   @Require
-  m1.Foo fooRequired;
+  late m1.Foo fooRequired;
 
   @Require
-  m1.SimpleGeneric<Foo> genericRequired;
+  late m1.SimpleGeneric<Foo> genericRequired;
 }
 
 abstract class AbstractGeneric<T> {
@@ -31,7 +31,7 @@ abstract class AbstractGeneric<T> {
   T get element;
 
   @Inject
-  m1.SimpleGeneric<T> generic;
+  m1.SimpleGeneric<T> get generic;
 }
 
 abstract class GenericInterface<K> {
@@ -47,11 +47,11 @@ abstract class GenericTypedWithFoo extends AbstractGeneric<m1.Foo> implements Ge
 
 abstract class GenericContainer<T> {
   @Create
-  AbstractGeneric<T> genericfoo;
+  late AbstractGeneric<T> genericFoo;
   @Create
-  GenericInterface<T> genericinterface;
+  late GenericInterface<T> genericInterface;
   @Create
-  T child;
+  late T child;
 }
 
 @Compose

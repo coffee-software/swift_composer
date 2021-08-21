@@ -1,0 +1,3 @@
+VirtualTypeX:
+  extends: m1.SimpleGeneric<m1.Foo>
+  stringField: FooStringField2

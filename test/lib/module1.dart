@@ -31,7 +31,7 @@ abstract class FooChild extends Foo {
 @Compose
 abstract class FooChild2 extends Foo {
   @Require
-  String requiredString;
+  late String requiredString;
 }
 
 @Compose
@@ -51,7 +51,7 @@ abstract class BarChild extends Bar {
 }
 
 @Compose
-abstract class SimpleGeneric<T> {
+abstract class SimpleGeneric<T> implements Pluggable {
   void method(T param) {
 
   }

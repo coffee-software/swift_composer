@@ -25,11 +25,12 @@ void main() {
 
     test('generics', () {
       expect(generics.$om.typedGeneric2, isNotNull);
+      expect(generics.$om.typedGeneric2.instancesOfFoo.length, equals(1));
     });
 
     test('factory', () {
       var foo = factory_test.$om.container.createFoo();
-      var sub = factory_test.$om.container.createSubFoo('test');
+      var sub = factory_test.$om.container.createSubFoo('module_test.FooChild');
       factory_test.$om.container.createComplex('test', foo);
     });
 

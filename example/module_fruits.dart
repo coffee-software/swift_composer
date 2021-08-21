@@ -17,7 +17,7 @@ abstract class Fruit implements Pluggable {
 
   @Require
   @JsonEncode
-  String name;
+  String name = "";
 
   @JsonEncode
   double weight = 1.0;

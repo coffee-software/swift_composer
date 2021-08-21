@@ -1,10 +1,15 @@
 import 'package:swift_composer/swift_composer.dart';
-import 'module1.dart' as module_test;
+import '../lib/module1.dart' as module_test;
 
 part 'generics.c.dart';
 
-@Compose
+@ComposeSubtypes
 abstract class Generic<T, F extends module_test.Foo> {
+  @InjectInstances
+  Map<String, F> get instancesOfFoo;
+
+  @SubtypeFactory
+  F factoryForFoo(String className);
 
 }
 
