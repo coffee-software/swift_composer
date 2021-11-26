@@ -2,21 +2,41 @@ library swift_composer.test;
 
 import 'package:test/test.dart';
 
-import 'sources/compose.dart' as compose;
-import 'sources/factory.dart' as factory_test;
-import 'sources/fields.dart' as fields;
-import 'sources/generics.dart' as generics;
+import 'compose/compose.dart' as compose_test;
+import 'config/config.dart' as config_test;
+import 'factory/factory.dart' as factory_test;
+import 'fields/fields.dart' as fields_test;
+import 'generics/generics.dart' as generics_test;
+import 'namespaces/namespaces.dart' as namespaces_test;
+import 'plugins/plugins.dart' as plugins_test;
+import 'subtypes/subtypes.dart' as subtypes_test;
 
 void main() {
 
+    test('config', () {
+      expect(config_test.$om.toString(), isNotNull);
+    });
+
+    test('plugins', () {
+      expect(plugins_test.$om.module_test1_Foo.format('prefix'), equals('AFTER:prefix:BEFOREmodule_test1.FooFooField124'));
+    });
+
+    test('namespaces', () {
+      expect(namespaces_test.$om.test_module1_Bar, isNotNull);
+    });
+
+    test('subtypes', () {
+      expect(subtypes_test.$om.module_test1_Foo, isNotNull);
+    });
+
     test('compose', () {
 
-      expect(compose.$om.m1_Foo.stringField, equals(
+      expect(compose_test.$om.m1_Foo.stringField, equals(
         'FooField'
       ));
 
-      expect(compose.$om.genericTypedWithFoo.getDescription(
-          compose.$om.genericTypedWithFoo.element
+      expect(compose_test.$om.genericTypedWithFoo.getDescription(
+          compose_test.$om.genericTypedWithFoo.element
       ), equals(
         'stringField=FooField'
       ));
@@ -24,8 +44,8 @@ void main() {
     });
 
     test('generics', () {
-      expect(generics.$om.typedGeneric2, isNotNull);
-      expect(generics.$om.typedGeneric2.instancesOfFoo.length, equals(1));
+      expect(generics_test.$om.typedGeneric2, isNotNull);
+      expect(generics_test.$om.typedGeneric2.instancesOfFoo.length, equals(1));
     });
 
     test('factory', () {
@@ -36,7 +56,7 @@ void main() {
 
     test('fields', () {
       expect(
-        fields.$om.container.toJson(),
+        fields_test.$om.container.toJson(),
         equals(
           {
             'one': 'FooField',
@@ -47,7 +67,7 @@ void main() {
           }
         )
       );
-      var created = fields.$om.container.fromJson({
+      var created = fields_test.$om.container.fromJson({
           'one': 'one',
           'two': 'two',
           'three': 'three',

@@ -5,6 +5,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
+import 'package:analyzer/dart/analysis/results.dart';
 
 import 'package:build/build.dart';
 import "package:path/path.dart" show dirname;
@@ -15,8 +16,15 @@ import 'package:yaml/yaml.dart';
 
 extension MethodElementSource on MethodElement {
   String getSourceCode() {
-    String part = this.session!.getParsedLibraryByElement(this.library).getElementDeclaration(this)!.node.toSource();
-    return part.substring(part.indexOf('{'));
+
+    SomeParsedLibraryResult result = this.session!.getParsedLibraryByElement2(this.library);
+    if (result is ParsedLibraryResult) {
+      String part = result.getElementDeclaration(this)!.node.toSource();
+      return part.substring(part.indexOf('{'));
+    } else {
+      return '//failed to find code';
+    }
+
   }
 }
 
@@ -54,7 +62,7 @@ class TypeInfo {
   }
 
   String get displayName {
-     return '${fullName}' + (typeArguments.isNotEmpty ? '<${typeArguments.map((e)=>e.displayName).join(',')}>' : '');
+     return '${fullName}' + (typeArguments.isNotEmpty ? '<${typeArguments.map((e)=>e.displayName).join(',')}>' : '') + (type.nullabilitySuffix == NullabilitySuffix.question ? '?' : '');
   }
 
   String get varName {
@@ -228,7 +236,7 @@ class TypeInfo {
       }
     }
 
-    bool ret = false;
+    bool? ret = null;
     if (element != null) {
       for (var c in allClassElementsPath()) {
         for (var metadataElement in c.metadata) {
@@ -236,12 +244,10 @@ class TypeInfo {
             ret = true;
           }
           if (metadataElement.toSource() == '@ComposeSubtypes') {
-            if (c != element) {
-              ret = true;
-            }
+            ret = (c != element);
           }
         }
-        if (ret) break;
+        if (ret != null) break;
       }
       /*if (ret == false ) {
         if (element!.displayName == 'Map' || element!.displayName == 'List') {
@@ -253,7 +259,7 @@ class TypeInfo {
     //TODO optimise if does not have plugins?
     //typeMap.getPluginsForType(this).isEmpty
 
-    return ret;
+    return ret ?? false;
   }
 
   List<FieldElement> allFields() {
@@ -532,7 +538,7 @@ class TypeInfo {
         }
       }
       lines.add('}');
-      lines.add('throw new Exception(\'no type for\' + className);');
+      lines.add('throw new Exception(\'no type for \' + className);');
     } else if (elementInjectionType(methodElement) == '@InjectSubtypesNames') {
       var bound = this.typeMap.fromDartType(methodElement.typeParameters[0].bound!, this.typeArgumentsMap());
       for (var type in typeMap.getNonAbstractSubtypes(bound)) {
@@ -564,7 +570,8 @@ class TypeInfo {
             var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, typeArgumentsMap());
 
             var filedBitGenerator = (String prefix, FieldElement field){
-              if (typeMap.typeSystem.isSubtypeOf(field.type, fieldType.type)) {
+
+              if (typeMap.typeSystem.isSubtypeOf(field.type, methodPartElement.parameters.last.type)) {
 
                 if (requireAnnotation != null) {
                   bool pass = false;
@@ -573,6 +580,7 @@ class TypeInfo {
                   }
                   if (!pass) return;
                 }
+
                 //TODO
                 var compiledFieldType = typeMap.fromDartType(field.type, typeArgumentsMap());
                 String part = methodPartElement.getSourceCode();
@@ -585,7 +593,7 @@ class TypeInfo {
                 if (methodPartElement.parameters.indexWhere((element) => element.name == 'className') > -1) {
                   part = part.replaceAll(
                       'className',
-                      '"${compiledFieldType.fullName}"'
+                      '"${compiledFieldType.displayName}"'
                   );
                 }
                 lines.add(part);
@@ -813,6 +821,13 @@ class TypeMap {
       output.writeLn("//candidate: " + type.displayName);
       if (type.element == null) return false;
       output.writeLn("//element ok");
+
+      for (var metadataElement in (type.element as ClassElement).metadata) {
+        if (metadataElement.toSource() == '@ComposeSubtypes') {
+          return false;
+        }
+      }
+
       if (type.displayName == parentType.displayName) {
         return true;
       }
