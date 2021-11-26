@@ -6,12 +6,12 @@ part 'plugins.c.dart';
 @Compose
 abstract class SimplePlugin extends TypePlugin<module_test1.Foo> {
 
-  //@Plugin
-  void beforeFormat(String prefix) {
-    prefix = prefix + ":BEFORE";
+  @MethodPlugin
+  List beforeFormat(String prefix) {
+    return [prefix + ":BEFORE"];
   }
 
-  //@Plugin
+  @MethodPlugin
   String afterFormat(String ret) => "AFTER:" + ret;
 
 }
