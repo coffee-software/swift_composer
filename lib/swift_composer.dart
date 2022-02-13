@@ -8,9 +8,18 @@ const Require = true;
 const Inject = true;
 const InjectClassName = true;
 const InjectClassNames = true;
+const InjectConfig = true;
+
+//TODO:
 const InjectInstances = true;
 const InjectSubtypesNames = true;
-const InjectConfig = true;
+
+abstract class SubtypesOf<T> {
+
+  List<String> get classNames;
+  List<T> get allInstances;
+
+}
 
 const Compile = true;
 const CompilePart = true;

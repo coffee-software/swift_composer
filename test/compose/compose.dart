@@ -1,6 +1,6 @@
 import 'package:swift_composer/swift_composer.dart';
-import '../lib/module1.dart' as m1;
-import '../lib/module2.dart';
+import '../lib/foo.dart' as foo;
+import '../lib/generics.dart' as generics;
 
 part 'compose.c.dart';
 
@@ -8,54 +8,38 @@ part 'compose.c.dart';
 abstract class Container {
 
   @Inject
-  m1.Foo get fooInjected;
+  foo.Foo get fooInjected;
 
   @Inject
-  m1.SimpleGeneric<m1.Foo> get genericInjected;
+  generics.SimpleGeneric<foo.Foo> get genericOfFooInjected;
+
+  @Inject
+  generics.SimpleGeneric<String> get genericOfStringInjected;
+
+  @Inject
+  generics.ComplexGeneric<foo.Foo, foo.Foo> get complexGenericInjected;
 
   @Create
-  late m1.Foo fooCreated;
+  late foo.Foo fooCreated;
 
   @Create
-  late m1.SimpleGeneric<m1.Foo> genericCreated;
+  late generics.SimpleGeneric<foo.Foo> genericOfFooCreated;
+
+  @Create
+  late generics.SimpleGeneric<String> genericOfStringCreated;
+
+  @Create
+  late generics.ComplexGeneric<foo.Foo, foo.Foo> complexGenericCreated;
 
   @Require
-  late m1.Foo fooRequired;
+  late foo.Foo fooRequired;
 
   @Require
-  late m1.SimpleGeneric<Foo> genericRequired;
-}
+  late generics.SimpleGeneric<foo.Foo> genericOfFooRequired;
 
-abstract class AbstractGeneric<T> {
-  @Inject
-  T get element;
+  @Require
+  late generics.SimpleGeneric<String> genericOfStringRequired;
 
-  @Inject
-  m1.SimpleGeneric<T> get generic;
-}
-
-abstract class GenericInterface<K> {
-  String getDescription(K x);
-}
-
-@Compose
-abstract class GenericTypedWithFoo extends AbstractGeneric<m1.Foo> implements GenericInterface<m1.Foo> {
-  String getDescription(m1.Foo x) {
-    return "stringField=${x.stringField}";
-  }
-}
-
-abstract class GenericContainer<T> {
-  @Create
-  late AbstractGeneric<T> genericFoo;
-  @Create
-  late GenericInterface<T> genericInterface;
-  @Create
-  late T child;
-}
-
-@Compose
-class ContainerFoo extends GenericContainer<m1.Foo> {
-
-
+  @Require
+  late generics.ComplexGeneric<foo.Foo, foo.Foo> complexGenericRequired;
 }

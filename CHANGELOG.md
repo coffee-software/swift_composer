@@ -1,3 +1,7 @@
+# 0.5.0
+
+refactor type info logic and integration tests
+
 # 0.4.0
 
 fixes for dart 2.14 release, tests cleanup

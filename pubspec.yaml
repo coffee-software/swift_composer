@@ -1,6 +1,6 @@
 name: swift_composer
 description: Extensible Object Manager with no boilerplate code using source_gen
-version: 0.4.0
+version: 0.5.0
 homepage: https://github.com/fsw/swift_composer
 environment:
   sdk: ">=2.13.0 <3.0.0"

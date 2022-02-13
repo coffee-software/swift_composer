@@ -1,0 +1,4 @@
+Bar:
+  stringField: BarStringField
+BarChild:
+  stringField: BarChildStringField

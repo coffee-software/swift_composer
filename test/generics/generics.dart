@@ -1,5 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
-import '../lib/module1.dart' as module_test;
+import '../lib/foo.dart' as module_test;
 
 part 'generics.c.dart';
 
