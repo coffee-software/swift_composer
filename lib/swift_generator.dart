@@ -136,11 +136,13 @@ class CompiledOmGenerator implements TemplateLoader {
     library.element.imports.forEach((e){
       if (e.uri != null && !e.uri!.startsWith('dart:')) {
         AssetId id = AssetId.resolve(new Uri.file(e.uri!), from:step.inputId);
-        modules.add(new ImportedModule(
-            packagesMap[id.package]! + id.path,
-            packagesMap[id.package]!,
-            prefix: e.prefix?.name
-        ));
+        if (packagesMap.containsKey(id.package)) {
+          modules.add(new ImportedModule(
+              packagesMap[id.package]! + id.path,
+              packagesMap[id.package]!,
+              prefix: e.prefix?.name
+          ));
+        }
       }
     });
     modules.add(new ImportedModule(
@@ -169,21 +171,23 @@ class CompiledOmGenerator implements TemplateLoader {
             '// no config file for ' + (module.prefix ?? 'root') + ': ' + path);
       }
     };
-
-    for (var file in (new Directory('config')).listSync(recursive: true).where((element) => element is File)) {
-      if (file.path.endsWith('.yaml')) {
-        var name = file.path
-            .split('/')
-            .last;
-        name = name.substring(0, name.length - 5);
-        String content = await File(file.path).readAsStringSync();
-        output.writeLn('// config file for module_' + name + ' ' + file.path);
-        var yaml = loadYaml(content);
-        if (yaml is YamlMap) {
-          config.append(yaml.value, 'module_' + name);
+    var configDir = new Directory('config');
+    if (configDir.existsSync()) {
+      for (var file in configDir.listSync(recursive: true).where((element) => element is File)) {
+        if (file.path.endsWith('.yaml')) {
+          var name = file.path
+              .split('/')
+              .last;
+          name = name.substring(0, name.length - 5);
+          String content = await File(file.path).readAsStringSync();
+          output.writeLn('// config file for module_' + name + ' ' + file.path);
+          var yaml = loadYaml(content);
+          if (yaml is YamlMap) {
+            config.append(yaml.value, 'module_' + name);
+          }
         }
-      }
 
+      }
     }
   }
 

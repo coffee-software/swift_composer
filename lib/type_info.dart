@@ -176,7 +176,7 @@ class TypeInfo {
       case '@InjectConfig':
         if (!typeConfig.containsKey(field.name)) {
           if (!fieldType.isNullable) {
-            throw new Exception("missing config value for non nullable field ${fieldType.fullName}");
+            throw new Exception("missing config value for non nullable field ${fieldType.fullName} ${field.name}");
           }
           return 'null';
         }
@@ -421,9 +421,6 @@ class TypeInfo {
       }
 
       output.writeLn("// CONFIG");
-      config.config.forEach((key, value) {
-        output.writeLn("// config: ${key} ${value}");
-      });
       typeConfig.forEach((key, value) {
         output.writeLn("// config: ${key} ${value}");
       });
@@ -635,6 +632,7 @@ class TypeInfo {
       for (var type in typeMap.getNonAbstractSubtypes(bound)) {
         lines.add('if (T == ${type.fullName}) return \'${type.fullName}\';');
       }
+      lines.add('throw new Exception(\'no code for type\');');
     } else if (elementInjectionType(methodElement) == '@Factory') {
       var best = typeMap.getBestCandidate(returnType);
       lines.add('//' + returnType.fullName);
@@ -687,6 +685,12 @@ class TypeInfo {
                       '"${compiledFieldType.displayName}"'
                   );
                 }
+                part = part.replaceAll(
+                    'as ${methodPartElement.parameters.last.type.getDisplayString(withNullability: false)}',
+                    'as ${compiledFieldType.displayName}'
+                );
+                part = "// ${methodPartElement.parameters.last.type.getDisplayString(withNullability: false)} \n" + part;
+                part = "// ${compiledFieldType.displayName} \n" + part;
                 lines.add(part);
               }
             };
