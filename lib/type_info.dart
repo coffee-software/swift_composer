@@ -62,7 +62,7 @@ class TypeInfo {
   }
 
   String get uniqueName {
-    return fullName + (typeArguments.isNotEmpty ? '<${typeArguments.map((e)=>e.fullName).join(',')}>' : '') + (isNullable ? '?' : '');
+    return fullName + (typeArguments.isNotEmpty ? '<${typeArguments.map((e)=>e.uniqueName).join(',')}>' : '') + (isNullable ? '?' : '');
     //':' + type.getDisplayString(withNullability: true)
     //':' + ((type is ParameterizedType) ? (type as ParameterizedType).typeArguments.map((e) => e.getDisplayString(withNullability: true)).join(',') : 'NP') +
   }
@@ -192,7 +192,7 @@ class TypeInfo {
         }
       case '@InjectInstances':
         TypeInfo type = fieldType.typeArguments[1];
-        typeMap.subtypeInstanes[type.displayName] = type;
+        typeMap.subtypeInstanes[type.uniqueName] = type;
         return '\$om.instancesOf${type.flatName}';
       case '@InjectClassName':
         return '"' + displayName + '"';
@@ -228,6 +228,7 @@ class TypeInfo {
     }
   }
 
+  // yields class element and all its supertypes
   Iterable<ClassElement> allClassElementsPath() sync* {
     if (element != null) {
       yield element!;
@@ -315,10 +316,14 @@ class TypeInfo {
 
   List<MethodElement> allMethods() {
     List<MethodElement> allMethods = [];
+    List<String> overrides = [];
     for (var element in allClassElementsPath()) {
-      for (var m in element.methods) {
+      for (var method in element.methods) {
         //if (!m.name.startsWith('_'))
-        allMethods.add(m);
+        if (!overrides.contains(method.name)) {
+          allMethods.add(method);
+          overrides.add(method.name);
+        }
       }
     }
     return allMethods;
@@ -411,14 +416,13 @@ class TypeInfo {
               "// argument: ${element.name} ${element.hashCode.toString()}");
         });
       }
-
-
       //lines.add("//config: ${json.encode(typeConfig)}");
 
       plugins = typeMap.getPluginsForType(this);
       for (var p in plugins) {
         output.writeLn("// plugin: ${p.displayName}");
       }
+
 
       output.writeLn("// CONFIG");
       typeConfig.forEach((key, value) {
@@ -568,17 +572,17 @@ class TypeInfo {
     allMethods().forEach((methodElement){
       List<String> methodLines = generateMethodOverride(methodElement);
       if (methodLines.length > 0) {
-
+        output.writeLn('//method ${methodElement.name} override');
         TypeInfo returnType = typeMap.fromDartType(methodElement.returnType, context:typeArgumentsMap());
         var typeArgsList = methodElement.typeParameters.map((e) {
           return e.name + (e.bound != null ? " extends " + (this.typeMap.fromDartType(e.bound!, context:this.typeArgumentsMap())).fullName : '');
         }).join(',');
         var typeArgs = typeArgsList.isNotEmpty ? "<" + typeArgsList + ">" : '';
 
-        output.writeLn("${returnType.displayName} ${methodElement.name}${typeArgs}(");
+        output.writeLn("${returnType.uniqueName} ${methodElement.name}${typeArgs}(");
         output.writeLn(methodElement.parameters.map((mp){
           TypeInfo parameterType = typeMap.fromDartType(mp.type, context:typeArgumentsMap());
-          return "${parameterType.displayName} ${mp.name}";
+          return "${parameterType.uniqueName} ${mp.name}";
         }).join(","));
 
         output.writeLn("){");
@@ -908,7 +912,7 @@ class TypeMap {
     allTypes.forEach((name, ce){
       if (ce.element != null) {
         ce.element!.allSupertypes.forEach((st){
-          if (st.name == 'TypePlugin' && st.typeArguments.length == 1 && typeSystem.isAssignableTo(st.typeArguments[0], type.type)) {
+          if (st.name == 'TypePlugin' && st.typeArguments.length == 1 && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
             plugins.add(ce);
           }
         });
@@ -946,8 +950,8 @@ class TypeMap {
           for (var i=0; i < parentType.typeArguments.length; i++) {
             parentFits = parentFits && (
                 (parentType.typeArguments[i].type.getDisplayString(withNullability: false) == st.typeArguments[i].getDisplayString(withNullability: false))
-                    ||
-                    typeSystem.isSubtypeOf(st.typeArguments[i], parentType.typeArguments[i].type)
+                    //|| typeSystem.isSubtypeOf(parentType.typeArguments[i].type, st.typeArguments[i])  //TODO ????? maybe both? or maybe for separate usage case?
+                    || typeSystem.isSubtypeOf(st.typeArguments[i], parentType.typeArguments[i].type)
             );//
             //parentFits = parentFits & st.typeArguments[i].isAssignableTo(parentType.arguments[i].type);
           }

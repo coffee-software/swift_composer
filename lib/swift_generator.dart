@@ -1,5 +1,8 @@
 library swift_composer;
 
+import 'dart:convert';
+
+import 'package:path/path.dart';
 import 'package:source_gen/source_gen.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
@@ -14,10 +17,11 @@ import 'tools.dart';
 
 
 class ImportedModule {
+  String name;
   String filePath;
   String? prefix;
   String packagePath;
-  ImportedModule(this.filePath, this.packagePath, {this.prefix});
+  ImportedModule(this.name, this.filePath, this.packagePath, {this.prefix});
 }
 
 class CompiledOmGenerator implements TemplateLoader {
@@ -34,8 +38,12 @@ class CompiledOmGenerator implements TemplateLoader {
         typeMap = new TypeMap(output, library.element.typeSystem, config);
 
   String? load(String name) {
-    for (var m in modules.reversed) {
-      String filePath = m.packagePath + '/templates/' + name;
+    for (var module in modules.reversed) {
+      String searchName = name;
+      if (searchName.startsWith(module.name + '_')) {
+        searchName = searchName.replaceFirst(module.name + '_', '');
+      }
+      String filePath = module.packagePath + '/lib/widgets/' + searchName;
       File file = new File(filePath);
       if (file.existsSync()) {
         return file.readAsStringSync();
@@ -64,8 +72,9 @@ class CompiledOmGenerator implements TemplateLoader {
 
 
     typeMap.subtypeInstanes.values.forEach((typeInfo){
-      output.writeLn('Map<String, ${typeInfo.fullName}> get instancesOf${typeInfo.flatName} {');
+      output.writeLn('Map<String, ${typeInfo.uniqueName}> get instancesOf${typeInfo.flatName} {');
       output.writeLn('return {');
+
       typeMap.getNonAbstractSubtypes(typeInfo).forEach((subtypeInfo){
         if (subtypeInfo.allRequiredFields().length == 0) {
           output.writeLn('"${subtypeInfo.displayName}": ');
@@ -118,34 +127,54 @@ class CompiledOmGenerator implements TemplateLoader {
    */
   Future<void> _loadLibraryFiles() async {
     var packagesMap = new Map<String, String>();
-    File packagesFile = new File(Directory.current.path + '/.packages');
-    (await packagesFile.readAsString()).split("\n").skip(1).forEach((line){
-      if (line.indexOf(':') > -1) {
-        String package = line.substring(0, line.indexOf(':'));
-        String root = line.substring(line.indexOf(':') + 1);
-        root = root.replaceFirst('lib/', '', root.length - 4);
-        if (root.startsWith('file://')) {
-          root = root.replaceFirst('file://', '');
-        } else if (!root.startsWith('/')) {
-          root = Directory.current.path + '/' + root;
-        }
-        packagesMap[package] = root;
-      }
-    });
 
-    library.element.imports.forEach((e){
-      if (e.uri != null && !e.uri!.startsWith('dart:')) {
-        AssetId id = AssetId.resolve(new Uri.file(e.uri!), from:step.inputId);
-        if (packagesMap.containsKey(id.package)) {
+    File packagesFile = new File(Directory.current.path + '/.dart_tool/package_config.json');
+    var packagesInfo = jsonDecode(packagesFile.readAsStringSync());
+    for (var i = 0; i < packagesInfo['packages'].length; i++) {
+      String name = packagesInfo['packages'][i]['name'];
+      String root = packagesInfo['packages'][i]['rootUri'];
+      if (root.startsWith('file://')) {
+        root = root.replaceFirst('file://', '');
+      }
+      if (!root.startsWith('/')) {
+        root = Directory.current.path + '/.dart_tool/' + root;
+      }
+      packagesMap[name] = root;
+    }
+
+    library.element.imports.forEach((import) {
+      if (import.uri == null) {
+        return;
+      }
+
+      if (import.uri!.indexOf(':') > -1) {
+        String schema = import.uri!.substring(0, import.uri!.indexOf(':'));
+        if (schema != 'package') {
+          return;
+        }
+        String package = import.uri!.substring(
+            import.uri!.indexOf(':') + 1, import.uri!.indexOf('/'));
+        if (packagesMap.containsKey(package)) {
+          String file = import.uri!.substring(import.uri!.indexOf('/') + 1);
           modules.add(new ImportedModule(
-              packagesMap[id.package]! + id.path,
-              packagesMap[id.package]!,
-              prefix: e.prefix?.name
+              package,
+              packagesMap[package]! + '/lib/' + file,
+              packagesMap[package]!,
+              prefix: import.prefix?.name
           ));
         }
+      } else {
+
+        modules.add(new ImportedModule(
+            'application',
+            dirname(Directory.current.path + '/' + step.inputId.path) + '/' + import.uri!,
+            Directory.current.path + '/',
+            prefix: import.prefix?.name
+        ));
       }
     });
     modules.add(new ImportedModule(
+        'application',
         Directory.current.path + '/' + step.inputId.path,
         Directory.current.path + '/'
     ));
