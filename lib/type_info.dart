@@ -663,8 +663,8 @@ class TypeInfo {
             var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
 
             var filedBitGenerator = (String prefix, FieldElement field){
-
-              if (typeMap.typeSystem.isSubtypeOf(field.type, methodPartElement.parameters.last.type)) {
+              if (typeMap.typeSystem.isSubtypeOf(field.type, methodPartElement.parameters.last.type) &&
+                (field.type.nullabilitySuffix == methodPartElement.parameters.last.type.nullabilitySuffix)) {
 
                 if (requireAnnotation != null) {
                   bool pass = false;
@@ -960,7 +960,6 @@ class TypeMap {
         }
         fits = fits | parentFits;
       });
-
       return fits;
     }).toList();
 

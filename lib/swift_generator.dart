@@ -80,8 +80,10 @@ class CompiledOmGenerator implements TemplateLoader {
           output.writeLn('"${subtypeInfo.displayName}": ');
           output.writeMany(subtypeInfo.generateCreator());
           output.writeLn(',');
+        } else {
+          output.writeLn('//${subtypeInfo.displayName} requires a param');
         }
-        });
+      });
       output.writeLn('};');
       output.writeLn('}');
     });
