@@ -1,22 +1,35 @@
 library swift_composer;
 
+import 'package:analyzer/dart/analysis/session.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/analysis/results.dart';
+import 'package:build/build.dart';
 
 import 'tools.dart';
 
+Future<ResolvedLibraryResult> _getResolvedLibrary(LibraryElement library, Resolver resolver) async {
+  final freshLibrary = await resolver.libraryFor(await resolver.assetIdForElement(library));
+  final freshSession = freshLibrary.session;
+  return await freshSession.getResolvedLibraryByElement(freshLibrary) as ResolvedLibraryResult;
+}
+
 extension MethodElementSource on MethodElement {
-  String getSourceCode() {
-    SomeParsedLibraryResult result = this.session!.getParsedLibraryByElement(this.library);
-    if (result is ParsedLibraryResult) {
-      String part = result.getElementDeclaration(this)!.node.toSource();
-      return part.substring(part.indexOf('{'));
-    } else {
-      return '//failed to find code';
+  Future<String> getSourceCode(BuildStep step) async {
+    String part = '';
+    try {
+      // TODO: https://github.com/dart-lang/build/issues/2634
+      // find better way to get method source?
+      ParsedLibraryResult result = this.session!.getParsedLibraryByElement(this.library) as ParsedLibraryResult;
+      part = result.getElementDeclaration(this)!.node.toSource();
+    } on InconsistentAnalysisException {
+      var resolver = await step.resolver;
+      ResolvedLibraryResult result = await _getResolvedLibrary(this.library, resolver);
+      part = result.getElementDeclaration(this)!.node.toSource();
     }
+    return part.substring(part.indexOf('{'));
   }
 }
 
@@ -245,7 +258,7 @@ class TypeInfo {
       if (st.element.name == 'Object') {
         break;
       }
-      yield st.element;
+      yield st.element as ClassElement;
     }
   }
 
@@ -578,8 +591,8 @@ class TypeInfo {
       }
     });
 
-    allMethods().forEach((methodElement){
-      List<String> methodLines = generateMethodOverride(methodElement);
+    for (var methodElement in allMethods()) {
+      List<String> methodLines = await generateMethodOverride(methodElement);
       if (methodLines.length > 0) {
         output.writeLn('//method ${methodElement.name} override');
         TypeInfo returnType = typeMap.fromDartType(methodElement.returnType, context:typeArgumentsMap());
@@ -598,8 +611,7 @@ class TypeInfo {
         output.writeMany(methodLines);
         output.writeLn("}");
       }
-
-    });
+    }
 
     //generted template methods
     for (var fieldElement in allFields()) {
@@ -620,7 +632,7 @@ class TypeInfo {
     output.writeLn('}');
   }
 
-  List<String> generateMethodOverride(MethodElement methodElement) {
+  Future<List<String>> generateMethodOverride(MethodElement methodElement) async {
     TypeInfo returnType = typeMap.fromDartType(methodElement.returnType, context:typeArgumentsMap());
     List<String> lines = [];
 
@@ -655,10 +667,10 @@ class TypeInfo {
     } else if (elementInjectionType(methodElement) == '@Compile') {
       lines.add('//compiled method');
       //TODO: add original method ??
-      allMethods().forEach((methodPartElement){
+      for (var methodPartElement in allMethods()) {
         if (methodPartElement.name.startsWith('_' + methodElement.name)) {
           if (elementInjectionType(methodPartElement) == '@CompilePart') {
-            String part = methodPartElement.getSourceCode();
+            String part = await methodPartElement.getSourceCode(this.typeMap.step);
             lines.add(part);
           } else if (elementInjectionType(methodPartElement) == '@CompileFieldsOfType') {
 
@@ -671,7 +683,7 @@ class TypeInfo {
             }
             var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
 
-            var filedBitGenerator = (String prefix, FieldElement field){
+            Future<void> filedBitGenerator(String prefix, FieldElement field) async {
               if (typeMap.typeSystem.isSubtypeOf(field.type, methodPartElement.parameters.last.type) &&
                 (field.type.nullabilitySuffix == methodPartElement.parameters.last.type.nullabilitySuffix)) {
 
@@ -686,7 +698,7 @@ class TypeInfo {
                 //TODO
                 var compiledFieldType = typeMap.fromDartType(field.type, context:typeArgumentsMap());
 
-                String part = methodPartElement.getSourceCode();
+                String part = await methodPartElement.getSourceCode(this.typeMap.step);
                 if (methodPartElement.parameters.indexWhere((element) => element.name == 'name') > -1) {
                   part = part.replaceAll('name', '\'${field.name}\'');
                 }
@@ -718,13 +730,15 @@ class TypeInfo {
                 lines.add(part);
               }
             };
-            allFields().forEach((f) => filedBitGenerator('this.', f));
-            plugins.forEach((plugin){
-              plugin.allFields().forEach((f) => filedBitGenerator('this.${plugin.varName}.', f));
-            });
+            for (var f in allFields()) await filedBitGenerator('this.', f);
+            for (var plugin in plugins) {
+              for (var f in plugin.allFields()) {
+                await filedBitGenerator('this.${plugin.varName}.', f);
+              }
+            }
           };
         };
-      });
+      }
       //lines.add(methodElement.computeNode().body.toSource());
     } else {
       //check if method has any plugins
@@ -784,9 +798,10 @@ class TypeMap {
   TypeSystem typeSystem;
   OutputWriter output;
   DiConfig config;
+  BuildStep step;
   //Map<LibraryElement, String?> importedLibrariesMap = {};
 
-  TypeMap(this.output, this.typeSystem, this.config);
+  TypeMap(this.output, this.typeSystem, this.step, this.config);
 
   Map<String, TypeInfo> allTypes = {};
   Map<String, TypeInfo> subtypeInstanes = {};

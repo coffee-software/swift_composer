@@ -34,7 +34,7 @@ class CompiledOmGenerator implements TemplateLoader {
   List<ImportedModule> modules = [];
 
   CompiledOmGenerator(this.output, this.library, this.step, this.config, this.debug) :
-        typeMap = new TypeMap(output, library.element.typeSystem, config);
+        typeMap = new TypeMap(output, library.element.typeSystem, step, config);
 
   String? load(String name) {
     for (var module in modules.reversed) {
@@ -146,34 +146,36 @@ class CompiledOmGenerator implements TemplateLoader {
       packagesMap[name] = root;
     }
 
-    library.element.imports.forEach((import) {
-      if (import.uri == null) {
+    library.element.libraryImports.forEach((import) {
+
+      if (!(import.uri is DirectiveUriWithRelativeUriString)) {
         return;
       }
+      String stringUri = (import.uri as DirectiveUriWithRelativeUriString).relativeUriString;
 
-      if (import.uri!.indexOf(':') > -1) {
-        String schema = import.uri!.substring(0, import.uri!.indexOf(':'));
+      if (stringUri.indexOf(':') > -1) {
+        String schema = stringUri.substring(0, stringUri.indexOf(':'));
         if (schema != 'package') {
           return;
         }
-        String package = import.uri!.substring(
-            import.uri!.indexOf(':') + 1, import.uri!.indexOf('/'));
+        String package = stringUri.substring(
+            stringUri.indexOf(':') + 1, stringUri.indexOf('/'));
         if (packagesMap.containsKey(package)) {
-          String file = import.uri!.substring(import.uri!.indexOf('/') + 1);
+          String file = stringUri.substring(stringUri.indexOf('/') + 1);
           modules.add(new ImportedModule(
               package,
               packagesMap[package]! + '/lib/' + file,
               packagesMap[package]!,
-              prefix: import.prefix?.name
+              prefix: import.prefix?.element?.name
           ));
         }
       } else {
 
         modules.add(new ImportedModule(
             'application',
-            dirname(Directory.current.path + '/' + step.inputId.path) + '/' + import.uri!,
+            dirname(Directory.current.path + '/' + step.inputId.path) + '/' + stringUri,
             Directory.current.path + '/',
-            prefix: import.prefix?.name
+            prefix: import.prefix?.element?.name
         ));
       }
     });
@@ -244,7 +246,7 @@ class CompiledOmGenerator implements TemplateLoader {
       });
       output.writeSplit();
 
-      for (var importElement in library.element.imports) {
+      for (var importElement in library.element.libraryImports) {
         if (!importElement.importedLibrary!.isDartCore) {
           importElement.namespace.definedNames.forEach((key, value) {
             //output.writeLn('//' + key + ' ' + value.displayName + ' ' + value.getExtendedDisplayName('test') + " ${value.hashCode}");
@@ -271,7 +273,7 @@ class CompiledOmGenerator implements TemplateLoader {
 
       for (int i=0; i < typeMap.allTypes.keys.length; i++) {
         output.writeSplit();
-        TypeInfo type = typeMap.allTypes[typeMap.allTypes.keys.elementAt(i)!]!;
+        TypeInfo type = typeMap.allTypes[typeMap.allTypes.keys.elementAt(i)]!;
         if (type.hasInterceptor() && !type.isNullable) {
           output.writeLn("// interceptor for [${type.uniqueName}]");
           if (debug) {

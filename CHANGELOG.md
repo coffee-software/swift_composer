@@ -1,3 +1,13 @@
+# 0.6.0
+
+* update sdk and build system dependencies
+* fix plugins generation for Lists
+* separate generation bits for nullable and nonnullable fields
+* add debug parameter
+* improve instances creation performance
+* feature to read config directory
+* bugfixes
+
 # 0.5.0
 
 refactor type info logic and integration tests
