@@ -1,7 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
-import '../lib/module1.dart' as module_test;
-
-import 'package:source_gen/builder.dart' as jajaja;
+import '../lib/foo.dart' as module_test;
 
 part 'factory.c.dart';
 
@@ -27,7 +25,7 @@ abstract class Container {
 
     void test(){
       module_test.Foo x1 = createFoo();
-      module_test.Foo x2 = createSubFoo('FooChild');
+      module_test.Foo x2 = createSubFoo('module_test.Foo');
       Complex complex = createComplex('text', x1);
     }
 

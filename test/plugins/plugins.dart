@@ -1,10 +1,12 @@
 import 'package:swift_composer/swift_composer.dart';
-import '../lib/module1.dart' as module_test1;
+import '../lib/foo.dart' as foo;
+import '../lib/bar.dart' as bar;
+import '../lib/generics.dart' as generics;
 
 part 'plugins.c.dart';
 
 @Compose
-abstract class SimplePlugin extends TypePlugin<module_test1.Foo> {
+abstract class SimplePlugin extends TypePlugin<foo.Foo> {
 
   @MethodPlugin
   List beforeFormat(String prefix) {
@@ -17,17 +19,45 @@ abstract class SimplePlugin extends TypePlugin<module_test1.Foo> {
 }
 
 @Compose
-abstract class MoreComplexPlugin extends TypePlugin<module_test1.Foo> {
+abstract class MoreComplexPlugin extends TypePlugin<foo.Foo> {
 
   @Inject
-  module_test1.Bar get bar;
+  bar.Bar get barField;
 
 }
 
 @Compose
-abstract class PluginOnGeneric extends TypePlugin<module_test1.SimpleGeneric> {
+abstract class PluginOnGeneric extends TypePlugin<generics.SimpleGeneric> {
 
   @Inject
-  module_test1.Bar get bar;
+  bar.Bar get barField;
+
+}
+
+@Compose
+abstract class AbstractGeneric<T> {
+  @Inject
+  T get element;
+
+  @Inject
+  generics.SimpleGeneric<T> get generic;
+}
+
+@Compose
+abstract class GenericTypedWithFoo extends AbstractGeneric<foo.Foo> {
+  String getDescription(foo.Foo x) {
+    return "stringField=${x.stringField}";
+  }
+}
+
+abstract class GenericContainer<T> {
+  @Create
+  late AbstractGeneric<T> genericFoo;
+  @Create
+  late T child;
+}
+
+@Compose
+class ContainerFoo extends GenericContainer<foo.Foo> {
 
 }

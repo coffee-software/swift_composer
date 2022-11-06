@@ -9,7 +9,3 @@ FooChild2:
   stringField: "FooChild2Field"
   doubleField: 0.55
   booleanField: true
-Bar:
-  stringField: BarField
-BarChild:
-  stringField: BarChildField

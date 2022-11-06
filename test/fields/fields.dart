@@ -1,24 +1,25 @@
 import 'package:swift_composer/swift_composer.dart';
-import '../lib/module1.dart' as module_test;
+import '../lib/foo.dart' as foo;
+import '../lib/bar.dart' as bar;
 
 part 'fields.c.dart';
 
 abstract class Base {
   @Create
-  late module_test.Foo one;
+  late foo.Foo one;
   @Create
-  late module_test.Foo two;
+  late foo.Foo two;
   @Create
-  late module_test.FooChild three;
+  late foo.FooChild three;
   @Create
-  late module_test.BarChild bar;
+  late bar.BarChild four;
 }
 
 @Compose
 abstract class Container extends Base {
 
   @Create
-  late module_test.Foo four;
+  late foo.Foo fifth;
 
   Map toJson() {
       Map ret = new Map();
@@ -31,12 +32,12 @@ abstract class Container extends Base {
 
 
   @CompileFieldsOfType
-  void _fieldsToJsonFoo(Map target, String name, module_test.Foo field) {
+  void _fieldsToJsonFoo(Map target, String name, foo.Foo field) {
     target[name] = field.stringField;
   }
 
   @CompileFieldsOfType
-  void _fieldsToJsonBar(Map target, String name, module_test.Bar field) {
+  void _fieldsToJsonBar(Map target, String name, bar.Bar field) {
     target[name] = field.classNames.join('');
   }
 
@@ -53,16 +54,16 @@ abstract class Container extends Base {
   void copyFieldsFromJson(Map source);
 
   @Factory
-  module_test.FooChild createFooChild(String requiredString);
+  foo.FooChild createFooChild(String requiredString);
 
   @CompileFieldsOfType
-  void _copyFieldsFromJsonFoo(Map source, String name, module_test.Foo field) {
+  void _copyFieldsFromJsonFoo(Map source, String name, foo.Foo field) {
     field = createFooChild(source[name]);
   }
 
   @CompileFieldsOfType
-  void _copyFieldsFromJsonBar(Map source, String name, module_test.Bar field) {
-    field = $om.module_test_BarChild;
+  void _copyFieldsFromJsonBar(Map source, String name, bar.Bar field) {
+    field = $om.bar_BarChild;
   }
 
 }
@@ -71,6 +72,6 @@ abstract class Container extends Base {
 abstract class ChildContainer extends Base {
 
   @Create
-  late module_test.Foo five;
+  late foo.Foo five;
 
 }

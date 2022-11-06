@@ -1,0 +1,11 @@
+Foo:
+  stringField: NestedFooField
+  integerField: 124
+FooChild:
+  stringField: NestedFooChildField
+  doubleField: 0.55
+  booleanField: true
+FooChild2:
+  stringField: NestedFooChild2Field
+  doubleField: 0.55
+  booleanField: true
