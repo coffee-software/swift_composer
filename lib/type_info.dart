@@ -10,7 +10,7 @@ import 'tools.dart';
 
 extension MethodElementSource on MethodElement {
   String getSourceCode() {
-    SomeParsedLibraryResult result = this.session!.getParsedLibraryByElement2(this.library);
+    SomeParsedLibraryResult result = this.session!.getParsedLibraryByElement(this.library);
     if (result is ParsedLibraryResult) {
       String part = result.getElementDeclaration(this)!.node.toSource();
       return part.substring(part.indexOf('{'));
@@ -28,7 +28,15 @@ class TypeInfo {
 
   TypeMap typeMap;
   late DartType type;
-  List<TypeInfo> plugins = [];
+
+  List<TypeInfo>? _plugins;
+  List<TypeInfo> get plugins {
+    if (_plugins == null) {
+      _plugins = typeMap.getPluginsForType(this);
+    }
+    return _plugins!;
+  }
+
   List<TypeInfo> typeArguments;
   DiConfig config;
 
@@ -251,6 +259,9 @@ class TypeInfo {
     if (allRequiredFields().length > 0) {
       return false;
     }
+    if (isNullable) {
+      return false;
+    }
     return hasInterceptor();
     for (var c in allClassElementsPath()) {
       for (var metadataElement in c.metadata) {
@@ -418,7 +429,6 @@ class TypeInfo {
       }
       //lines.add("//config: ${json.encode(typeConfig)}");
 
-      plugins = typeMap.getPluginsForType(this);
       for (var p in plugins) {
         output.writeLn("// plugin: ${p.displayName}");
       }
@@ -474,12 +484,11 @@ class TypeInfo {
         output.writeLn("//${fieldElement.type.getDisplayString(withNullability: true)}");
 
         if (elementInjectionType(fieldElement) == '@Create') {
-          output.writeLn("//create");
           //TMP
           TypeInfo ti = typeMap.fromDartType(fieldElement.type, context:typeArgumentsMap());
-          output.writeLn("//" + ti.uniqueName);
+          output.writeLn("//" + ti.uniqueName, debug:true);
           typeMap.getNonAbstractSubtypes(ti).forEach((element) {
-            output.writeLn("// c: ${element.uniqueName}");
+            output.writeLn("// c: ${element.uniqueName}", debug:true);
           });
 
           TypeInfo candidate = typeMap.getBestCandidate(ti);
@@ -560,7 +569,7 @@ class TypeInfo {
       String? value = getFieldInitializationValue(fieldType, fieldElement);
       //debug
       typeMap.getNonAbstractSubtypes(fieldType).forEach((element) {
-        output.writeLn("// c: ${element.uniqueName}");
+        output.writeLn("// c: ${element.uniqueName}", debug: true);
       });
       if (value != null) {
         output.writeLn(
@@ -676,6 +685,7 @@ class TypeInfo {
 
                 //TODO
                 var compiledFieldType = typeMap.fromDartType(field.type, context:typeArgumentsMap());
+
                 String part = methodPartElement.getSourceCode();
                 if (methodPartElement.parameters.indexWhere((element) => element.name == 'name') > -1) {
                   part = part.replaceAll('name', '\'${field.name}\'');
@@ -686,15 +696,25 @@ class TypeInfo {
                 if (methodPartElement.parameters.indexWhere((element) => element.name == 'className') > -1) {
                   part = part.replaceAll(
                       'className',
-                      '"${compiledFieldType.displayName}"'
+                      '"${compiledFieldType.uniqueName}"'
                   );
                 }
+                String paramClass = methodPartElement.parameters.last.type.getDisplayString(withNullability: false);
+                String fieldClass = compiledFieldType.uniqueName;
                 part = part.replaceAll(
-                    'as ${methodPartElement.parameters.last.type.getDisplayString(withNullability: false)}',
-                    'as ${compiledFieldType.displayName}'
+                    'as ${paramClass}',
+                    'as ${fieldClass}'
                 );
-                part = "// ${methodPartElement.parameters.last.type.getDisplayString(withNullability: false)} \n" + part;
-                part = "// ${compiledFieldType.displayName} \n" + part;
+                
+                if (paramClass.startsWith('List<') && fieldClass.startsWith('List<')) {
+                  part = part.replaceAll(
+                      'as ${paramClass.substring(5 , paramClass.length - 1)}',
+                      'as ${fieldClass.substring(5 , fieldClass.length - 1)}'
+                  );
+                }
+
+                part = "// ${paramClass} \n" + part;
+                part = "// ${fieldClass} \n" + part;
                 lines.add(part);
               }
             };

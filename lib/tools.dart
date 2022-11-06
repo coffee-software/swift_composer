@@ -22,14 +22,21 @@ class DiConfig {
 }
 
 class OutputWriter {
+  bool debug;
+  OutputWriter(this.debug);
+
   List<String> _lines = [];
 
-  writeLn(String line) {
-    _lines.add(line);
+  writeLn(String line, {bool debug = false}) {
+    if (this.debug == true || debug == false) {
+      _lines.add(line);
+    }
   }
 
-  writeMany(List<String> lines) {
-    _lines.addAll(lines);
+  writeMany(List<String> lines, {bool debug = false}) {
+    if (this.debug == true || debug == false) {
+      _lines.addAll(lines);
+    }
   }
 
   writeSplit() {

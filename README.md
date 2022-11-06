@@ -229,5 +229,5 @@ Plugin class can customize behavior of such methods:
 Running tests:
 
 ```
-pub run build_runner build && dart test/swift_composer_test.dart
+dart run build_runner build && dart test/swift_composer_test.dart
 ```

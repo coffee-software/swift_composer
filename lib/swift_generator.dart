@@ -14,8 +14,6 @@ import 'package:yaml/yaml.dart';
 import 'type_info.dart';
 import 'tools.dart';
 
-
-
 class ImportedModule {
   String name;
   String filePath;
@@ -30,11 +28,12 @@ class CompiledOmGenerator implements TemplateLoader {
   LibraryReader library;
   BuildStep step;
   OutputWriter output;
+  bool debug;
 
   DiConfig config;
   List<ImportedModule> modules = [];
 
-  CompiledOmGenerator(this.output, this.library, this.step, this.config) :
+  CompiledOmGenerator(this.output, this.library, this.step, this.config, this.debug) :
         typeMap = new TypeMap(output, library.element.typeSystem, config);
 
   String? load(String name) {
@@ -72,13 +71,16 @@ class CompiledOmGenerator implements TemplateLoader {
 
 
     typeMap.subtypeInstanes.values.forEach((typeInfo){
+      output.writeLn('Map<String, ${typeInfo.uniqueName}>? _instancesOf${typeInfo.flatName};');
       output.writeLn('Map<String, ${typeInfo.uniqueName}> get instancesOf${typeInfo.flatName} {');
-      output.writeLn('return {');
+      output.writeLn('if (_instancesOf${typeInfo.flatName} != null) return _instancesOf${typeInfo.flatName}!;');
+      output.writeLn('return _instancesOf${typeInfo.flatName} = {');
 
       typeMap.getNonAbstractSubtypes(typeInfo).forEach((subtypeInfo){
         if (subtypeInfo.allRequiredFields().length == 0) {
           output.writeLn('"${subtypeInfo.displayName}": ');
-          output.writeMany(subtypeInfo.generateCreator());
+          output.writeLn(subtypeInfo.varName);
+          //output.writeMany(subtypeInfo.generateCreator());
           output.writeLn(',');
         } else {
           output.writeLn('//${subtypeInfo.displayName} requires a param');
@@ -259,22 +261,28 @@ class CompiledOmGenerator implements TemplateLoader {
         value.preAnaliseAllUsedTypes();
       });
 
-      output.writeLn('// ALL TYPES INFO');
-      output.writeSplit();
-      typeMap.allTypes.forEach((key, value) {
-        output.writeLn('// ' + key + ' => ' + value.debugInfo);
-      });
+      if (debug) {
+        output.writeLn('// ALL TYPES INFO');
+        output.writeSplit();
+        typeMap.allTypes.forEach((key, value) {
+          output.writeLn('// ' + key + ' => ' + value.debugInfo);
+        });
+      }
 
       for (int i=0; i < typeMap.allTypes.keys.length; i++) {
         output.writeSplit();
         TypeInfo type = typeMap.allTypes[typeMap.allTypes.keys.elementAt(i)!]!;
-        if (type.hasInterceptor()) {
+        if (type.hasInterceptor() && !type.isNullable) {
           output.writeLn("// interceptor for [${type.uniqueName}]");
-          await type.writeDebugInfo(output);
+          if (debug) {
+            await type.writeDebugInfo(output);
+          }
           await type.generateInterceptor(output, this);
         } else {
           output.writeLn("// no interceptor for [${type.uniqueName}]");
-          await type.writeDebugInfo(output);
+          if (debug) {
+            await type.writeDebugInfo(output);
+          }
         }
       }
       /*List<String> allTypes = [];
@@ -305,16 +313,21 @@ class CompiledOmGenerator implements TemplateLoader {
 
 class SwiftGenerator extends Generator {
 
-  const SwiftGenerator();
+  final BuilderOptions options;
+
+  const SwiftGenerator(this.options);
+
   @override
   FutureOr<String?> generate(LibraryReader library, BuildStep step) async {
+    bool debug = options.config.containsKey('debug') ? options.config['debug'] : false;
     if (library.element.parts.isNotEmpty) {
       return await (
           new CompiledOmGenerator(
-              new OutputWriter(),
+              new OutputWriter(debug),
               library,
               step,
-              new DiConfig()
+              new DiConfig(),
+              debug
           )
       ).generate();
     }
@@ -323,7 +336,6 @@ class SwiftGenerator extends Generator {
 
 }
 
-PartBuilder swiftBuilder(_) {
-  print(_);
-  return new PartBuilder([const SwiftGenerator()], '.c.dart');
+PartBuilder swiftBuilder(BuilderOptions options) {
+  return new PartBuilder([new SwiftGenerator(options)], '.c.dart');
 }
