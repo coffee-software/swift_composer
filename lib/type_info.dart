@@ -130,7 +130,7 @@ class TypeInfo {
   String get creatorName => hasInterceptor() ? '\$' + flatName : displayName;
 
   String generateCompiledConstructorDefinition() {
-    return '\$${fullName.replaceAll('.', '_')}' + '(' + allRequiredFields().map((f) => f.name).join(',') + ') {\n';
+    return '\$${flatName}' + '(' + allRequiredFields().map((f) => f.name).join(',') + ') {\n';
   }
 
   Iterable<FieldElement> allRequiredFields() {
