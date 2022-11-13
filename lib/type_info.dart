@@ -685,7 +685,8 @@ class TypeInfo {
 
             Future<void> filedBitGenerator(String prefix, FieldElement field) async {
               if (typeMap.typeSystem.isSubtypeOf(field.type, methodPartElement.parameters.last.type) &&
-                (field.type.nullabilitySuffix == methodPartElement.parameters.last.type.nullabilitySuffix)) {
+                  //dynamic is nullable but returns empty suffix
+                (methodPartElement.parameters.last.type.isDynamic || field.type.nullabilitySuffix == methodPartElement.parameters.last.type.nullabilitySuffix)) {
 
                 if (requireAnnotation != null) {
                   bool pass = false;
