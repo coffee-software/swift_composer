@@ -1,5 +1,6 @@
 import 'package:swift_composer/swift_composer.dart';
 import '../lib/foo.dart' as module_test1;
+export '../lib/foo.dart';
 
 part 'subtypes.c.dart';
 
@@ -12,4 +13,6 @@ abstract class Container {
   @SubtypeFactory
   module_test1.Foo factory(String className);
 
+  @Inject
+  SubtypesOf<module_test1.Foo> get subtypes;
 }

@@ -50,6 +50,25 @@ class CompiledOmGenerator implements TemplateLoader {
     }
     return null;
   }
+  void generateSubtypesOf() {
+    typeMap.subtypesOf.values.forEach((typeInfo) {
+
+      output.writeLn('class \$SubtypesOf' + typeInfo.flatName + ' extends SubtypesOf<' + typeInfo.uniqueName + '> {');
+      output.writeLn('String getCode<X extends ' + typeInfo.uniqueName + '>(){');
+      for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
+        output.writeLn('if (X == ${type.fullName}) return \'${type.fullName}\';');
+      }
+      output.writeLn('throw new Exception(\'no code for type\');');
+      output.writeLn('}');
+      output.writeLn('List<String> get allClassNames => [');
+      for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
+        output.writeLn('\'${type.fullName}\',');
+      }
+      output.writeLn('];');
+
+      output.writeLn('}');
+    });
+  }
 
   void generateObjectManager() {
     output.writeLn('class \$ObjectManager {');
@@ -68,7 +87,6 @@ class CompiledOmGenerator implements TemplateLoader {
         output.writeLn('}');
       }
     }
-
 
     typeMap.subtypeInstanes.values.forEach((typeInfo){
       output.writeLn('Map<String, ${typeInfo.uniqueName}>? _instancesOf${typeInfo.flatName};');
@@ -90,37 +108,9 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeLn('}');
     });
 
-    /*
-
-    Set<String> generated = new Set<String>();
-    childTypesLists.forEach((parentType){
-      if (generated.contains(parentType.flatName)) {
-        return;
-      }
-      generated.add(parentType.flatName);
-
-      ret += 'class \$SubtypesOf' + parentType.flatName + ' extends SubtypesOf<' + parentType.displayName + '> {\n';
-
-      List<ClassElement> subtypes = map.getNonAbstractSubtypes(parentType);
-
-
-      ret += '\tfinal Map<String, SubtypeOf<' + parentType.displayName + '>> delegate = {\n';
-      subtypes.forEach((childElement) {
-          ret += '\t\t\'' + childElement.name + '\' : new SubtypeOf<' + parentType.displayName + '>(';
-          ret += '() => new \$' + childElement.library.name + '_' + childElement.name + '()\n';
-          ret += ', [';
-          for (var m in childElement.metadata) {
-            ret += 'new ' + m.toSource().substring(1) + ', ';
-          }
-          ret += ']';
-          ret += '),\n';
-      });
-      ret += '\t};\n';
-
-      ret += '}\n';
+    typeMap.subtypesOf.values.forEach((typeInfo) {
+      output.writeLn('SubtypesOf<${typeInfo.uniqueName}> subtypesOf${typeInfo.flatName} = new \$SubtypesOf' + typeInfo.flatName + '();');
     });
-
-    */
 
     output.writeLn('}');
     output.writeLn('\$ObjectManager \$om = new \$ObjectManager();');
@@ -299,7 +289,8 @@ class CompiledOmGenerator implements TemplateLoader {
         }
       };*/
       output.writeSplit();
-
+      generateSubtypesOf();
+      output.writeSplit();
       generateObjectManager();
 
     } catch(e, stacktrace) {

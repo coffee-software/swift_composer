@@ -12,14 +12,15 @@ const InjectConfig = true;
 
 //TODO:
 const InjectInstances = true;
-const InjectSubtypesNames = true;
 
 abstract class SubtypesOf<T> {
-
-  List<String> get classNames;
-  List<T> get allInstances;
-
+  List<String> get allClassNames;
+  String getCode<X extends T>();
+  //TODO:
+  //Map<String, T> get allInstances;
+  //T getInstance<X extends T>();
 }
+
 
 const Compile = true;
 const CompilePart = true;

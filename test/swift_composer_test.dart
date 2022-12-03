@@ -32,6 +32,8 @@ void main() {
 
     test('subtypes', () {
       expect(subtypes_test.$om.module_test1_Foo, isNotNull);
+      expect(subtypes_test.$om.container.subtypes.allClassNames, equals(['module_test1.Foo', 'module_test1.FooChild', 'module_test1.FooChild2']));
+      expect(subtypes_test.$om.container.subtypes.getCode<subtypes_test.Foo>(), equals('module_test1.Foo'));
     });
 
     test('factory', () {

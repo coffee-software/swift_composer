@@ -169,7 +169,6 @@ class TypeInfo {
     '@InjectClassName',
     '@InjectClassNames',
     '@InjectInstances',
-    '@InjectSubtypesNames',
     '@InjectConfig',
     '@Compile',
     '@CompilePart',
@@ -193,7 +192,13 @@ class TypeInfo {
   String? getFieldInitializationValue(TypeInfo fieldType, FieldElement field) {
     switch (elementInjectionType(field.getter)) {
       case '@Inject':
-        return typeMap.generateTypeGetter(fieldType);
+        if (fieldType.fullName == 'SubtypesOf') {
+          TypeInfo type = fieldType.typeArguments[0];
+          typeMap.subtypesOf[type.uniqueName] = type;
+          return '\$om.subtypesOf${type.flatName}';
+        } else {
+          return typeMap.generateTypeGetter(fieldType);
+        }
       case '@InjectConfig':
         if (!typeConfig.containsKey(field.name)) {
           if (!fieldType.isNullable) {
@@ -652,12 +657,6 @@ class TypeInfo {
       }
       lines.add('}');
       lines.add('throw new Exception(\'no type for \' + className);');
-    } else if (elementInjectionType(methodElement) == '@InjectSubtypesNames') {
-      var bound = this.typeMap.fromDartType(methodElement.typeParameters[0].bound!, context:this.typeArgumentsMap());
-      for (var type in typeMap.getNonAbstractSubtypes(bound)) {
-        lines.add('if (T == ${type.fullName}) return \'${type.fullName}\';');
-      }
-      lines.add('throw new Exception(\'no code for type\');');
     } else if (elementInjectionType(methodElement) == '@Factory') {
       var best = typeMap.getBestCandidate(returnType);
       lines.add('//' + returnType.fullName);
@@ -806,6 +805,7 @@ class TypeMap {
 
   Map<String, TypeInfo> allTypes = {};
   Map<String, TypeInfo> subtypeInstanes = {};
+  Map<String, TypeInfo> subtypesOf = {};
 
   Map<ClassElement, String> classNames = {};
 
