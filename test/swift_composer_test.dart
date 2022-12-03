@@ -42,16 +42,60 @@ void main() {
 
     test('fields', () {
       expect(
-          fields_test.$om.container.toJson(),
-          equals(
-              {
-                'one': 'FooField',
-                'two': 'FooField',
-                'three': 'FooChildField',
-                'fifth': 'FooField',
-                'four': 'bar.BarChild'
-              }
-          )
+          fields_test.$om.childContainer.toJson(),
+          equals({
+              'six': {
+                'name': 'six',
+                'className': 'foo.Foo',
+                'boolParam': true,
+                'intParam_value': 3,
+                'stringParam_value': 'test',
+                'complexParam_value1': 5,
+                'complexParam_value2': 'something',
+                'value.stringField': 'FooField'
+              },
+              'fifth': {
+                'name': 'fifth',
+                'className': 'foo.Foo',
+                'boolParam': false,
+                'intParam_value': 1,
+                'stringParam_value': 'test1',
+                'complexParam_value1': 2,
+                'complexParam_value2': 'test2',
+                'value.stringField': 'FooField'
+              },
+              'one': {
+                'name': 'one',
+                'className': 'foo.Foo',
+                'boolParam': false,
+                'intParam_value': 1,
+                'stringParam_value': 'test1',
+                'complexParam_value1': 2,
+                'complexParam_value2': 'test2',
+                'value.stringField': 'FooField'
+              },
+              'two': {
+                'name': 'two',
+                'className': 'foo.Foo',
+                'boolParam': false,
+                'intParam_value': 1,
+                'stringParam_value': 'test1',
+                'complexParam_value1': 2,
+                'complexParam_value2': 'test2',
+                'value.stringField': 'FooField'
+              },
+              'three': {
+                'name': 'three',
+                'className': 'foo.FooChild',
+                'boolParam': false,
+                'intParam_value': 1,
+                'stringParam_value': 'test1',
+                'complexParam_value1': 2,
+                'complexParam_value2': 'test2',
+                'value.stringField': 'FooChildField'
+              },
+              'four': 'bar.BarChild'
+          })
       );
       var created = fields_test.$om.container.fromJson({
         'one': 'one',

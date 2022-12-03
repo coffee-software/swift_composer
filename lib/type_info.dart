@@ -1,6 +1,7 @@
 library swift_composer;
 
 import 'package:analyzer/dart/analysis/session.dart';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/dart/element/type_system.dart';
@@ -29,6 +30,8 @@ extension MethodElementSource on MethodElement {
       ResolvedLibraryResult result = await _getResolvedLibrary(this.library, resolver);
       part = result.getElementDeclaration(this)!.node.toSource();
     }
+    //named parameters can be defined
+    part = part.substring(part.indexOf(')'));
     return part.substring(part.indexOf('{'));
   }
 }
@@ -680,12 +683,15 @@ class TypeInfo {
                 lines.add('//' + requireAnnotation);
               }
             }
-            var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
+            
+            //var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
 
             Future<void> filedBitGenerator(String prefix, FieldElement field) async {
-              if (typeMap.typeSystem.isSubtypeOf(field.type, methodPartElement.parameters.last.type) &&
+              ParameterElement fieldParameter = methodPartElement.parameters.where((element) => element.name == 'field').first;
+
+              if (typeMap.typeSystem.isSubtypeOf(field.type, fieldParameter.type) &&
                   //dynamic is nullable but returns empty suffix
-                (methodPartElement.parameters.last.type.isDynamic || field.type.nullabilitySuffix == methodPartElement.parameters.last.type.nullabilitySuffix)) {
+                (fieldParameter.type.isDynamic || field.type.nullabilitySuffix == fieldParameter.type.nullabilitySuffix)) {
 
                 if (requireAnnotation != null) {
                   bool pass = false;
@@ -695,22 +701,60 @@ class TypeInfo {
                   if (!pass) return;
                 }
 
-                //TODO
                 var compiledFieldType = typeMap.fromDartType(field.type, context:typeArgumentsMap());
-
+                lines.add('{');
+                //magic parameter match
+                for (var methodParameter in methodPartElement.parameters) {
+                  if (methodElement.parameters.where((element) => element.name == methodParameter.name).isNotEmpty) {
+                    //this parameter comes from compiled method
+                    continue;
+                  }
+                  if (methodParameter.name == fieldParameter.name) {
+                    //this is a special param
+                    continue;
+                  }
+                  var methodParameterValue = 'null';
+                  if (methodParameter.name == 'name') {
+                    methodParameterValue = '"${field.name}"';
+                  } else if (methodParameter.name == 'className') {
+                    methodParameterValue = '"${compiledFieldType.uniqueName}"';
+                  } else if (methodParameter.isOptional) {
+                    methodParameterValue = methodParameter.defaultValueCode!;
+                    var nameParts = methodParameter.name.split('_');
+                    String annotationName = '@' + nameParts[0][0].toUpperCase() + nameParts[0].substring(1);
+                    if (nameParts.length == 1) {
+                      methodParameterValue = 'false';
+                      for (var fieldMeta in field.metadata) {
+                        if (fieldMeta.toSource() == annotationName) {
+                          methodParameterValue = 'true';
+                        }
+                      }
+                    } else {
+                      for (var fieldMeta in field.metadata) {
+                        if (fieldMeta.toSource().startsWith(annotationName + '(')) {
+                          DartObject annotationField = fieldMeta.computeConstantValue()!.getField(nameParts[1])!;
+                          switch (annotationField.type!.getDisplayString(withNullability: true)) {
+                            case 'String':
+                              methodParameterValue = '"' + annotationField.toStringValue()! + '"';
+                              break;
+                            case 'int':
+                              methodParameterValue = annotationField.toIntValue().toString();
+                              break;
+                            default :
+                              methodParameterValue = annotationField.toString();
+                          }
+                        }
+                      }
+                    }
+                  }
+                  lines.add('const ${methodParameter.name} = $methodParameterValue;');
+                }
                 String part = await methodPartElement.getSourceCode(this.typeMap.step);
-                if (methodPartElement.parameters.indexWhere((element) => element.name == 'name') > -1) {
-                  part = part.replaceAll('name', '\'${field.name}\'');
-                }
+
                 if (methodPartElement.parameters.indexWhere((element) => element.name == 'field') > -1) {
-                  part = part.replaceAll('field', '${prefix}${field.name}');
+                  part = part.replaceAll(fieldParameter.name, '${prefix}${field.name}');
                 }
-                if (methodPartElement.parameters.indexWhere((element) => element.name == 'className') > -1) {
-                  part = part.replaceAll(
-                      'className',
-                      '"${compiledFieldType.uniqueName}"'
-                  );
-                }
+
                 String paramClass = methodPartElement.parameters.last.type.getDisplayString(withNullability: false);
                 String fieldClass = compiledFieldType.uniqueName;
                 part = part.replaceAll(
@@ -725,9 +769,10 @@ class TypeInfo {
                   );
                 }
 
-                part = "// ${paramClass} \n" + part;
-                part = "// ${fieldClass} \n" + part;
+                //part = "// ${paramClass} \n" + part;
+                //part = "// ${fieldClass} \n" + part;
                 lines.add(part);
+                lines.add('}');
               }
             };
             for (var f in allFields()) await filedBitGenerator('this.', f);
