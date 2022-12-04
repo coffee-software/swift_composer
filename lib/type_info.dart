@@ -31,8 +31,7 @@ extension MethodElementSource on MethodElement {
       part = result.getElementDeclaration(this)!.node.toSource();
     }
     //named parameters can be defined
-    part = part.substring(part.indexOf(')'));
-    return part.substring(part.indexOf('{'));
+    return part.substring(part.indexOf(') {') + 1);
   }
 }
 
