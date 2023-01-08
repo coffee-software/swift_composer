@@ -22,6 +22,13 @@ class ImportedModule {
   ImportedModule(this.name, this.filePath, this.packagePath, {this.prefix});
 }
 
+class TemplateLocation {
+  ImportedModule module;
+  String path;
+  File file;
+  TemplateLocation(this.module, this.path, this.file);
+}
+
 class CompiledOmGenerator implements TemplateLoader {
 
   TypeMap typeMap;
@@ -36,7 +43,7 @@ class CompiledOmGenerator implements TemplateLoader {
   CompiledOmGenerator(this.output, this.library, this.step, this.config, this.debug) :
         typeMap = new TypeMap(output, library.element.typeSystem, step, config);
 
-  String? load(String name) {
+  TemplateLocation? openTemplate(String name) {
     for (var module in modules.reversed) {
       String searchName = name;
       if (searchName.startsWith(module.name + '_')) {
@@ -45,11 +52,20 @@ class CompiledOmGenerator implements TemplateLoader {
       String filePath = module.packagePath + '/lib/widgets/' + searchName;
       File file = new File(filePath);
       if (file.existsSync()) {
-        return file.readAsStringSync();
+        return TemplateLocation(module, '/lib/widgets/' + searchName, file);
       }
     }
     return null;
   }
+
+  String? load(String name) {
+    TemplateLocation? file = openTemplate(name);
+    if (file != null) {
+      return file.file.readAsStringSync();
+    }
+    return null;
+  }
+
   void generateSubtypesOf() {
     typeMap.subtypesOf.values.forEach((typeInfo) {
 
@@ -219,6 +235,41 @@ class CompiledOmGenerator implements TemplateLoader {
   /**
    *
    */
+  Future<void> _buildWidgetsIndex() async {
+    String widgetsIndexPath = Directory.current.path + '/' + step.inputId.path;
+    widgetsIndexPath = widgetsIndexPath.replaceFirst('.dart', '_widgets.scss');
+    File widgetsIndex = new File(widgetsIndexPath);
+    List<String> widgetsIndexContent = [];
+    if (widgetsIndex.existsSync()) {
+      if (typeMap.allTypes.containsKey('module_core.Widget')) {
+        for (var type in typeMap.getNonAbstractSubtypes(typeMap.allTypes['module_core.Widget']!)) {
+          String widgetName = type.fullName.replaceAll('.', '_');
+          var templateFile = openTemplate(widgetName + '.scss');
+          if (templateFile != null) {
+            //relativePath =
+            //output.writeLn('// file: ${templateFile.module.name} ${templateFile.path} ${templateFile.file.path}');
+            widgetsIndexContent.add('.${widgetName} {');
+            if (templateFile.module.name == 'application') {
+              String relPath = relative(Directory.current.path + '/' + templateFile.path, from:dirname(widgetsIndexPath));
+              widgetsIndexContent.add('    @import \"${relPath}\"');
+            } else {
+              widgetsIndexContent.add('    @import \"package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}\"');
+            }
+            widgetsIndexContent.add('}');
+            var content = widgetsIndexContent.join("\n");
+            if (widgetsIndex.readAsStringSync() != content) {
+              //avoid rebuilding scss
+              widgetsIndex.writeAsStringSync(content);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /**
+   *
+   */
   Future<String> generate() async {
 
     var generationStart = new DateTime.now();
@@ -296,6 +347,8 @@ class CompiledOmGenerator implements TemplateLoader {
     } catch(e, stacktrace) {
       output.writeLn('/* unhandled code generator exception: \n' + e.toString() + '\n' + stacktrace.toString() + '*/');
     }
+
+    await _buildWidgetsIndex();
 
     var generationEnd = new DateTime.now();
     output.writeLn('//generated in ${generationEnd.millisecondsSinceEpoch - generationStart.millisecondsSinceEpoch}ms\n');
