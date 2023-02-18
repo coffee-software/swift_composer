@@ -15,6 +15,8 @@ const InjectInstances = true;
 
 abstract class SubtypesOf<T> {
   List<String> get allClassNames;
+  //first non-abstract type of all subtypes
+  Map<String, String> get baseClassNamesMap;
   String getCode<X extends T>();
   //TODO:
   //Map<String, T> get allInstances;

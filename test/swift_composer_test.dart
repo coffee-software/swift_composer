@@ -10,6 +10,7 @@ import 'fields/fields.dart' as fields_test;
 import 'plugins/plugins.dart' as plugins_test;
 import 'generics/generics.dart' as generics_test;
 import 'namespaces/namespaces.dart' as namespaces_test;
+import 'mixins/mixins.dart' as mixins_test;
 
 void main() {
 
@@ -32,6 +33,17 @@ void main() {
 
     test('subtypes', () {
       expect(subtypes_test.$om.module_test1_Foo, isNotNull);
+
+      expect(
+          subtypes_test.$om.container.subtypes.baseClassNamesMap,
+          equals({'module_test1.Foo': 'module_test1.Foo', 'module_test1.FooChild': 'module_test1.Foo', 'module_test1.FooChild2': 'module_test1.Foo'})
+      );
+
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.baseClassNamesMap,
+          equals({'SubtypeOfAbstract1': 'SubtypeOfAbstract1', 'SubtypeOfAbstract2': 'SubtypeOfAbstract2', 'SubtypeOfAbstract3': 'SubtypeOfAbstract2'})
+      );
+
       expect(subtypes_test.$om.container.subtypes.allClassNames, equals(['module_test1.Foo', 'module_test1.FooChild', 'module_test1.FooChild2']));
       expect(subtypes_test.$om.container.subtypes.getCode<subtypes_test.Foo>(), equals('module_test1.Foo'));
     });
@@ -132,4 +144,22 @@ void main() {
       expect(namespaces_test.$om.bar_module_Bar, isNotNull);
       expect(namespaces_test.$om.nested_module_CombinedFoo, isNotNull);
     });
+
+    test('mixins', () {
+      mixins_test.$om.mixinUser2.ownField1 = "ownField1Value";
+      mixins_test.$om.mixinUser2.ownField2 = "ownField2Value";
+      mixins_test.$om.mixinUser2.mixin1Field = "mixin1FieldValue";
+      mixins_test.$om.mixinUser2.mixin2Field = "mixin2FieldValue";
+      Map<String, String> test = {};
+      mixins_test.$om.mixinUser2.fieldsToJson(test);
+      expect(test['ownField1'], equals("ownField1Value"));
+      expect(test['ownField2'], equals("ownField2Value"));
+      expect(test['mixin1Field'], equals("mixin1FieldValue"));
+      expect(test['mixin2Field'], equals("mixin2FieldValue"));
+
+      expect(mixins_test.$om.container.instancesOfMixinUser1.keys, equals(['MixinUser1', 'MixinUser2']));
+      expect(mixins_test.$om.container.instancesOfTestMixin1.keys, equals(['MixinUser1', 'MixinUser2']));
+      expect(mixins_test.$om.container.instancesOfTestMixin2.keys, equals(['MixinUser2']));
+    });
+
 }

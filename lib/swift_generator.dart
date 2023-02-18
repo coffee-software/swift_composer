@@ -82,6 +82,19 @@ class CompiledOmGenerator implements TemplateLoader {
       }
       output.writeLn('];');
 
+      output.writeLn('Map<String, String> get baseClassNamesMap => {');
+      for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
+        String baseClassName = type.fullName;
+        for (var parentType in type.allTypeInfoPath()){
+          if (parentType.element!.metadata.where((element) => element.toSource() == '@ComposeSubtypes').isNotEmpty) {
+            break;
+          }
+          baseClassName = parentType.fullName;
+        }
+        output.writeLn('\'${type.fullName}\' : \'${baseClassName}\',');
+      }
+      output.writeLn('};');
+
       output.writeLn('}');
     });
   }

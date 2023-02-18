@@ -4,6 +4,23 @@ export '../lib/foo.dart';
 
 part 'subtypes.c.dart';
 
+@ComposeSubtypes
+abstract class AbstractBase {
+
+}
+
+abstract class SubtypeOfAbstract1 extends AbstractBase {
+
+}
+
+abstract class SubtypeOfAbstract2 extends AbstractBase {
+
+}
+
+abstract class SubtypeOfAbstract3 extends SubtypeOfAbstract2 {
+
+}
+
 @Compose
 abstract class Container {
 
@@ -15,4 +32,7 @@ abstract class Container {
 
   @Inject
   SubtypesOf<module_test1.Foo> get subtypes;
+
+  @Inject
+  SubtypesOf<AbstractBase> get subtypesWithAbstractBase;
 }
