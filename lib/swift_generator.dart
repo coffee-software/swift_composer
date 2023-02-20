@@ -125,12 +125,12 @@ class CompiledOmGenerator implements TemplateLoader {
 
       typeMap.getNonAbstractSubtypes(typeInfo).forEach((subtypeInfo){
         if (subtypeInfo.allRequiredFields().length == 0) {
-          output.writeLn('"${subtypeInfo.displayName}": ');
+          output.writeLn('"${subtypeInfo.fullName}": ');
           output.writeLn(subtypeInfo.varName);
           //output.writeMany(subtypeInfo.generateCreator());
           output.writeLn(',');
         } else {
-          output.writeLn('//${subtypeInfo.displayName} requires a param');
+          output.writeLn('//${subtypeInfo.fullName} requires a param');
         }
       });
       output.writeLn('};');
@@ -185,7 +185,7 @@ class CompiledOmGenerator implements TemplateLoader {
               package,
               packagesMap[package]! + '/lib/' + file,
               packagesMap[package]!,
-              prefix: import.prefix?.element?.name
+              prefix: import.prefix?.element.name
           ));
         }
       } else {
@@ -194,7 +194,7 @@ class CompiledOmGenerator implements TemplateLoader {
             'application',
             dirname(Directory.current.path + '/' + step.inputId.path) + '/' + stringUri,
             Directory.current.path + '/',
-            prefix: import.prefix?.element?.name
+            prefix: import.prefix?.element.name
         ));
       }
     });

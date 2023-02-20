@@ -61,6 +61,7 @@ class TypeInfo {
     if ((type.element != null) && (type.element is ClassElement)) {
       return type.element as ClassElement;
     }
+    return null;
   }
 
   bool get isNullable => (type.nullabilitySuffix == NullabilitySuffix.question);
@@ -77,11 +78,6 @@ class TypeInfo {
       }
       return name;
     }
-  }
-
-  @deprecated
-  String get displayName {
-    return '${fullName}'; // + (typeArguments.isNotEmpty ? '<${typeArguments.map((e)=>e.displayName).join(',')}>' : '') + (type.nullabilitySuffix == NullabilitySuffix.question ? '?' : '');
   }
 
   String get uniqueName {
@@ -117,11 +113,11 @@ class TypeInfo {
     int test = 1;
     //List<TypeInfo> path = allTypeInfoPath().toList();
     for (var type in allTypeInfoPath()){
-      classConfig[type.displayName] = test++;
-      if (config.config.containsKey(type.displayName)){
-        for ( var k in config.config[type.displayName].keys) {
+      classConfig[type.fullName] = test++;
+      if (config.config.containsKey(type.fullName)){
+        for ( var k in config.config[type.fullName].keys) {
           if (!classConfig.containsKey(k)) {
-            classConfig[k] = config.config[type.displayName][k];
+            classConfig[k] = config.config[type.fullName][k];
           }
         }
       }
@@ -129,7 +125,7 @@ class TypeInfo {
     return classConfig;
   }
 
-  String get creatorName => hasInterceptor() ? '\$' + flatName : displayName;
+  String get creatorName => hasInterceptor() ? '\$' + flatName : fullName;
 
   String generateCompiledConstructorDefinition() {
     return '\$${flatName}' + '(' + allRequiredFields().map((f) => f.name).join(',') + ') {\n';
@@ -216,19 +212,19 @@ class TypeInfo {
           case "bool":
             return typeConfig[field.name].toString();
           default:
-            return 'new ' + fieldType.displayName + '.fromString("' + typeConfig[field.name] + '")';
+            return 'new ' + fieldType.fullName + '.fromString("' + typeConfig[field.name] + '")';
         }
       case '@InjectInstances':
         TypeInfo type = fieldType.typeArguments[1];
         typeMap.subtypeInstanes[type.uniqueName] = type;
         return '\$om.instancesOf${type.flatName}';
       case '@InjectClassName':
-        return '"' + displayName + '"';
+        return '"' + fullName + '"';
       case '@InjectClassNames':
         List<String> path = [];
         for (var type in allTypeInfoPath()){
           if (field.enclosingElement == type.element) break;
-          path.add(type.displayName);
+          path.add(type.fullName);
         }
         return '[' + path.reversed.map((s)=>"'$s'").join(',') + ']';
       default:
@@ -283,17 +279,6 @@ class TypeInfo {
       return false;
     }
     return hasInterceptor();
-    for (var c in allClassElementsPath()) {
-      for (var metadataElement in c.metadata) {
-        if (metadataElement.toSource() == '@ComposeSubtypes') {
-          return c != element;
-        }
-        if (metadataElement.toSource() == '@Compose') {
-          return true;
-        }
-      }
-    }
-    return false;
   }
 
   bool hasInterceptor() {
@@ -436,7 +421,7 @@ class TypeInfo {
       });
       element!.thisType.typeArguments.forEach((element) {
         output.writeLn(
-            "// argument: ${element.name} ${element.hashCode.toString()}");
+            "// argument: ${element.getDisplayString(withNullability: true)} ${element.hashCode.toString()}");
       });
 
       for (var s in element!.allSupertypes) {
@@ -450,13 +435,13 @@ class TypeInfo {
         });
         s.typeArguments.forEach((element) {
           output.writeLn(
-              "// argument: ${element.name} ${element.hashCode.toString()}");
+              "// argument: ${element.getDisplayString(withNullability: true)} ${element.hashCode.toString()}");
         });
       }
       //lines.add("//config: ${json.encode(typeConfig)}");
 
       for (var p in plugins) {
-        output.writeLn("// plugin: ${p.displayName}");
+        output.writeLn("// plugin: ${p.fullName}");
       }
 
 
@@ -466,7 +451,7 @@ class TypeInfo {
       });
       output.writeLn("// TYPE PATH:");
       for (var type in this.allTypeInfoPath()) {
-        output.writeLn("//  " + type.displayName);
+        output.writeLn("//  " + type.fullName);
       }
     }
   }
@@ -491,7 +476,7 @@ class TypeInfo {
 
       var abstract = element!.typeParameters.isNotEmpty ? 'abstract ' : '';
       output.writeLn(
-          '${abstract}class \$$flatName$typeArgs extends $displayName$shortArgs implements Pluggable {');
+          '${abstract}class \$$flatName$typeArgs extends $fullName$shortArgs implements Pluggable {');
       if (element!.typeParameters.isNotEmpty) {
         output.writeLn('}');
         return;
@@ -651,7 +636,7 @@ class TypeInfo {
 
     if (elementInjectionType(methodElement) == '@SubtypeFactory') {
       if ((methodElement.parameters[0].name != 'className') ||
-          (methodElement.parameters[0].type.name != 'String')) {
+          (methodElement.parameters[0].type.getDisplayString(withNullability: true) != 'String')) {
         throw new Exception('SubtypeFactory first argument needs to be named className and be of type String');
       }
       lines.add('switch(className){');
@@ -982,7 +967,7 @@ class TypeMap {
       //throw new Exception('too many ${type.displayName}');
     }
     if (candidates.length == 0) {
-      throw new Exception('no initialisation candidate for ' + type.displayName);
+      throw new Exception('no initialisation candidate for ' + type.fullName);
     }
     return candidates[0];
   }
@@ -995,10 +980,11 @@ class TypeMap {
 
   List<TypeInfo> getPluginsForType(TypeInfo type){
     List<TypeInfo> plugins = [];
+
     allTypes.forEach((name, ce){
       if (ce.element != null) {
         ce.element!.allSupertypes.forEach((st){
-          if (st.name == 'TypePlugin' && st.typeArguments.length == 1 && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
+          if (st.getDisplayString(withNullability: false).startsWith('TypePlugin<') && st.typeArguments.length == 1 && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
             plugins.add(ce);
           }
         });
@@ -1031,7 +1017,12 @@ class TypeMap {
       type.element!.allSupertypes.forEach((st){
         bool parentFits = true;
         //isSubtype = isSubtype || i.displayName == parentType.displayName;
-        parentFits = parentFits & (st.name == parentType.type.name);
+        //TODO: add results to debug info, fix in tests
+        String stName = st.getDisplayString(withNullability: true);
+        if (stName.indexOf('<') > -1) stName = stName.substring(0, stName.indexOf('<'));
+        String parentTypeName = parentType.type.getDisplayString(withNullability: true);
+        if (parentTypeName.indexOf('<') > -1) parentTypeName = parentTypeName.substring(0, parentTypeName.indexOf('<'));
+        parentFits = parentFits & (stName == parentTypeName);
         if (parentType.typeArguments.length == st.typeArguments.length) {
           for (var i=0; i < parentType.typeArguments.length; i++) {
             parentFits = parentFits && (

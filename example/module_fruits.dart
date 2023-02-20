@@ -49,12 +49,14 @@ abstract class Fruit implements Pluggable {
 
   @CompileFieldsOfType
   @AnnotatedWith(JsonEncode)
+  // ignore: unused_element
   void _fieldsToJson1(Map target, String name, String field) {
     target[name] = field;
   }
 
   @CompileFieldsOfType
   @AnnotatedWith(JsonEncode)
+  // ignore: unused_element
   void _fieldsToJson2(Map target, String name, double field) {
     target[name] = field;
   }

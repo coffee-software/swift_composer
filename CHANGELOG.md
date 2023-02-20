@@ -1,3 +1,11 @@
+# 0.7.0
+
+* support for mixins
+* widgets index functionality
+* CompileFieldsOfType: add annotations as parameters and support for dynamic type
+* add SubtypesOf<> class (deprecated InjectSubtypeNames) and baseClassName mapping
+* fixes for generic interceptors
+
 # 0.6.0
 
 * update sdk and build system dependencies
