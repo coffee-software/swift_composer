@@ -249,10 +249,14 @@ class CompiledOmGenerator implements TemplateLoader {
    *
    */
   Future<void> _buildWidgetsIndex() async {
-    String widgetsIndexPath = Directory.current.path + '/' + step.inputId.path;
-    widgetsIndexPath = widgetsIndexPath.replaceFirst('.dart', '_widgets.scss');
+    String entrypointName = step.inputId.path.replaceAll('web/', '');
+    if (entrypointName.indexOf('/') > -1) {
+      entrypointName = entrypointName.substring(entrypointName.indexOf('/'));
+    }
+    String widgetsIndexPath = Directory.current.path + '/lib/' + entrypointName.replaceFirst('.dart', '_widgets.scss');
     File widgetsIndex = new File(widgetsIndexPath);
     List<String> widgetsIndexContent = [];
+    widgetsIndexContent.add('// auto generated widgets index file. do not modify');
     if (widgetsIndex.existsSync()) {
       if (typeMap.allTypes.containsKey('module_core.Widget')) {
         for (var type in typeMap.getNonAbstractSubtypes(typeMap.allTypes['module_core.Widget']!)) {
@@ -269,12 +273,13 @@ class CompiledOmGenerator implements TemplateLoader {
               widgetsIndexContent.add('    @import \"package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}\"');
             }
             widgetsIndexContent.add('}');
-            var content = widgetsIndexContent.join("\n");
-            if (widgetsIndex.readAsStringSync() != content) {
-              //avoid rebuilding scss
-              widgetsIndex.writeAsStringSync(content);
-            }
           }
+        }
+
+        var content = widgetsIndexContent.join("\n");
+        if (widgetsIndex.readAsStringSync() != content) {
+          //avoid rebuilding scss
+          widgetsIndex.writeAsStringSync(content);
         }
       }
     }
