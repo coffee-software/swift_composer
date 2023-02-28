@@ -49,6 +49,10 @@ class CompiledOmGenerator implements TemplateLoader {
       if (searchName.startsWith(module.name + '_')) {
         searchName = searchName.replaceFirst(module.name + '_', '');
       }
+      if (searchName.endsWith('.scss') && module.name == 'application') {
+        //prevent scss parts from being build
+        searchName = '_' + searchName;
+      }
       String filePath = module.packagePath + '/lib/widgets/' + searchName;
       File file = new File(filePath);
       if (file.existsSync()) {
@@ -249,15 +253,16 @@ class CompiledOmGenerator implements TemplateLoader {
    *
    */
   Future<void> _buildWidgetsIndex() async {
-    String entrypointName = step.inputId.path.replaceAll('web/', '');
-    if (entrypointName.indexOf('/') > -1) {
-      entrypointName = entrypointName.substring(entrypointName.indexOf('/'));
-    }
-    String widgetsIndexPath = Directory.current.path + '/lib/' + entrypointName.replaceFirst('.dart', '_widgets.scss');
+
+    String widgetsIndexPath = Directory.current.path + '/' + step.inputId.path;
+    String widgetsDirName = widgetsIndexPath.substring(0, widgetsIndexPath.lastIndexOf('/') + 1);
+    String widgetsFileName = widgetsIndexPath.substring(widgetsIndexPath.lastIndexOf('/') + 1);
+    widgetsIndexPath = widgetsDirName + '_' + widgetsFileName.replaceFirst('.dart', '_widgets.scss');
     File widgetsIndex = new File(widgetsIndexPath);
-    List<String> widgetsIndexContent = [];
-    widgetsIndexContent.add('// auto generated widgets index file. do not modify');
     if (widgetsIndex.existsSync()) {
+      output.writeLn('// generating widgets index file at ${widgetsIndex.path}');
+      List<String> widgetsIndexContent = [];
+      widgetsIndexContent.add('// auto generated widgets index file. do not modify');
       if (typeMap.allTypes.containsKey('module_core.Widget')) {
         for (var type in typeMap.getNonAbstractSubtypes(typeMap.allTypes['module_core.Widget']!)) {
           String widgetName = type.fullName.replaceAll('.', '_');
