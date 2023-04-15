@@ -15,7 +15,6 @@ abstract class Base {
   late bar.BarChild four;
 }
 
-
 @Compose
 abstract class Container extends Base {
 

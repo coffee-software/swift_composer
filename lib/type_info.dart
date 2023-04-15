@@ -8,6 +8,7 @@ import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:build/build.dart';
+import 'package:swift_composer/swift_generator.dart';
 
 import 'tools.dart';
 
@@ -17,8 +18,13 @@ Future<ResolvedLibraryResult> _getResolvedLibrary(LibraryElement library, Resolv
   return await freshSession.getResolvedLibraryByElement(freshLibrary) as ResolvedLibraryResult;
 }
 
+Map<int, String> sourcesCache = {};
+
 extension MethodElementSource on MethodElement {
   Future<String> getSourceCode(BuildStep step) async {
+    if (sourcesCache.containsKey(this.hashCode)) {
+      return sourcesCache[this.hashCode]!;
+    }
     String part = '';
     try {
       // TODO: https://github.com/dart-lang/build/issues/2634
@@ -31,7 +37,10 @@ extension MethodElementSource on MethodElement {
       part = result.getElementDeclaration(this)!.node.toSource();
     }
     //named parameters can be defined
-    return part.substring(part.indexOf(') {') + 1);
+    part = part.substring(part.indexOf(') {') + 1);
+    sourcesCache[this.hashCode] = part;
+    //part = '//method_hash:' + this.hashCode.toString() + "\n" + part;
+    return part;
   }
 }
 
@@ -135,13 +144,12 @@ class TypeInfo {
     return allFields().where((f) => elementInjectionType(f) == '@Require');
   }
 
-  List<String> generateCreator() {
-    List<String> lines = [];
+  String generateCreator() {
     String constructor = creatorName;
     if (fullName == 'List') {
       constructor += '.empty';
     }
-    lines.add('new ${constructor}(' + allRequiredFields().map((f) => f.name).join(',') + ')');
+    return 'new ${constructor}(' + allRequiredFields().map((f) => f.name).join(',') + ')';
     //TODO use ".."
     /*allFields().forEach((fieldElement){
       if (fieldElement.setter != null) {
@@ -156,8 +164,6 @@ class TypeInfo {
         }
       }
     });*/
-
-    return lines;
   }
 
   List<String> decorators = [
@@ -492,7 +498,7 @@ class TypeInfo {
 
     allFields().forEach((fieldElement){
       if (fieldElement.setter != null) {
-        output.writeLn("//${fieldElement.type.getDisplayString(withNullability: true)}");
+        //output.writeLn("//${fieldElement.type.getDisplayString(withNullability: true)}");
 
         if (elementInjectionType(fieldElement) == '@Create') {
           //TMP
@@ -503,9 +509,7 @@ class TypeInfo {
           });
 
           TypeInfo candidate = typeMap.getBestCandidate(ti);
-          output.writeLn('this.${fieldElement.name} = ');
-          output.writeMany(candidate.generateCreator());
-          output.writeLn(';');
+          output.writeLn('this.${fieldElement.name} = ' + candidate.generateCreator() + ';');
         } else {
           String? value = getFieldAssignmentValue(fieldElement);
           if (value != null) {
@@ -576,12 +580,8 @@ class TypeInfo {
 
 
       //fieldElement.type.isDartAsyncFutureOr
-      output.writeLn("// ${fieldType.uniqueName} ${fieldElement.name}");
+      //output.writeLn("// ${fieldType.uniqueName} ${fieldElement.name}");
       String? value = getFieldInitializationValue(fieldType, fieldElement);
-      //debug
-      typeMap.getNonAbstractSubtypes(fieldType).forEach((element) {
-        output.writeLn("// c: ${element.uniqueName}", debug: true);
-      });
       if (value != null) {
         output.writeLn(
             "${fieldType.uniqueName} get ${fieldElement.name} => ${value};"
@@ -639,23 +639,30 @@ class TypeInfo {
           (methodElement.parameters[0].type.getDisplayString(withNullability: true) != 'String')) {
         throw new Exception('SubtypeFactory first argument needs to be named className and be of type String');
       }
-      lines.add('switch(className){');
-      for (var type in typeMap.getNonAbstractSubtypes(returnType)) {
-        if (type.allRequiredFields().length == methodElement.parameters.length - 1) {
-          lines.add('case \'${type.fullName}\':');
-          lines.add('return ');
-          lines.addAll(type.generateCreator());
-          lines.add(';');
-        }
+      List<String> argsDef = [];
+      List<String> argsInv = [];
+      Map<String, TypeInfo> arguments = {};
+      for (var p in methodElement.parameters) {
+        TypeInfo argType = typeMap.fromDartType(p.type, context:typeArgumentsMap());
+        argsDef.add(
+            argType.uniqueName
+            + ' ' +
+          p.name);
+        argsInv.add(p.name);
+        arguments[p.name] = argType;
       }
-      lines.add('}');
-      lines.add('throw new Exception(\'no type for \' + className);');
+      String factoryInv = 'createSubtypeOf' + returnType.flatName + argsInv.length.toString() + '(' + argsInv.join(',') + ')';
+      String factoryDef = 'createSubtypeOf' + returnType.flatName + argsInv.length.toString() + '(' + argsDef.join(',') + ')';
+
+      if (!typeMap.subtypeFactories.containsKey(factoryDef)) {
+        typeMap.subtypeFactories[factoryDef] = new SubtypeFactoryInfo(returnType, arguments);
+      }
+      lines.add('return \$om.' + factoryInv + ';');
+
     } else if (elementInjectionType(methodElement) == '@Factory') {
       var best = typeMap.getBestCandidate(returnType);
       lines.add('//' + returnType.fullName);
-      lines.add('return ');
-      lines.addAll(best.generateCreator());
-      lines.add(';');
+      lines.add('return ' + best.generateCreator() + ';');
     } else if (elementInjectionType(methodElement) == '@Compile') {
       lines.add('//compiled method');
       //TODO: add original method ??
@@ -827,6 +834,11 @@ class TypeInfo {
 
 }
 
+class SubtypeFactoryInfo {
+  TypeInfo returnType;
+  Map<String, TypeInfo> arguments;
+  SubtypeFactoryInfo(this.returnType, this.arguments);
+}
 
 class TypeMap {
 
@@ -841,6 +853,7 @@ class TypeMap {
   Map<String, TypeInfo> allTypes = {};
   Map<String, TypeInfo> subtypeInstanes = {};
   Map<String, TypeInfo> subtypesOf = {};
+  Map<String, SubtypeFactoryInfo> subtypeFactories = {};
 
   Map<ClassElement, String> classNames = {};
 
