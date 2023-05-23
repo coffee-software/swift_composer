@@ -376,7 +376,8 @@ class CompiledOmGenerator implements TemplateLoader {
           importElement.namespace.definedNames.forEach(typeMap.registerClassElement);
         }
       }
-      library.allElements.forEach((element) => typeMap.registerClassElement(element.name!, element));
+      library.allElements.forEach((element) => (element.name != null) ? typeMap.registerClassElement(element.name!, element) : null);
+
       //DEBUG INFO
 
       new Map<String, TypeInfo>.from(typeMap.allTypes).forEach((key, value) {
