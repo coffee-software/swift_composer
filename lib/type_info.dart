@@ -693,7 +693,8 @@ class TypeInfo {
                 if (requireAnnotation != null) {
                   bool pass = false;
                   for (var m in field.metadata) {
-                    if (m.toSource() == requireAnnotation) pass = true;
+                    //support for parametrised required annotations
+                    if (m.toSource() == requireAnnotation || m.toSource().startsWith(requireAnnotation + '(')) pass = true;
                   }
                   if (!pass) return;
                 }
