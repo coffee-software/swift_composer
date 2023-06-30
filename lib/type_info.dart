@@ -184,8 +184,8 @@ class TypeInfo {
     '@MethodPlugin',
   ];
 
-  String? elementInjectionType(Element? element) {
-    for (var metadataElement in element!.metadata) {
+  String? elementInjectionType(Element element) {
+    for (var metadataElement in element.metadata) {
       if (decorators.contains(metadataElement.toSource())) {
         return metadataElement.toSource();
       }
@@ -194,7 +194,7 @@ class TypeInfo {
   }
 
   String? getFieldInitializationValue(TypeInfo fieldType, FieldElement field) {
-    switch (elementInjectionType(field.getter)) {
+    switch (elementInjectionType(field.getter!)) {
       case '@Inject':
         if (fieldType.fullName == 'SubtypesOf') {
           TypeInfo type = fieldType.typeArguments[0];
@@ -205,10 +205,16 @@ class TypeInfo {
         }
       case '@InjectConfig':
         if (!typeConfig.containsKey(field.name)) {
-          if (!fieldType.isNullable) {
-            throw new Exception("missing config value for non nullable field ${fieldType.fullName} ${field.name}");
+          if (field.getter!.isAbstract) {
+            if (!fieldType.isNullable) {
+              throw new Exception(
+                  "missing config value for non nullable field ${fieldType
+                      .fullName} ${field.name}");
+            }
+            return 'null';
+          } else {
+            return null;
           }
-          return 'null';
         }
         switch (fieldType.fullName){
           case "String":
@@ -753,7 +759,7 @@ class TypeInfo {
                   part = part.replaceAll(fieldParameter.name, '${prefix}${field.name}');
                 }
 
-                String paramClass = methodPartElement.parameters.last.type.getDisplayString(withNullability: false);
+                String paramClass = fieldParameter.type.getDisplayString(withNullability: false);
                 String fieldClass = compiledFieldType.uniqueName;
                 part = part.replaceAll(
                     'as ${paramClass}',
