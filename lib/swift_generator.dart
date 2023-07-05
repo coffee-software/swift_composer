@@ -317,6 +317,9 @@ class CompiledOmGenerator implements TemplateLoader {
     //unique set to generate Generic widgets once.
     Set<String> widgetsSet = new Set<String>();
     if (widgetsIndex.existsSync()) {
+      output.writeLn('// generating widgets index file at ${widgetsIndex.path}');
+      widgetsIndexContent.add('// auto generated widgets index file. do not modify');
+
       if (typeMap.allTypes.containsKey('module_core.Widget')) {
         for (var type in typeMap.getNonAbstractSubtypes(typeMap.allTypes['module_core.Widget']!)) {
           widgetsSet.add(type.fullName.replaceAll('.', '_'));
