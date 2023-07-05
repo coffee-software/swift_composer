@@ -313,32 +313,33 @@ class CompiledOmGenerator implements TemplateLoader {
     String widgetsFileName = widgetsIndexPath.substring(widgetsIndexPath.lastIndexOf('/') + 1);
     widgetsIndexPath = widgetsDirName + '_' + widgetsFileName.replaceFirst('.dart', '_widgets.scss');
     File widgetsIndex = new File(widgetsIndexPath);
+    List<String> widgetsIndexContent = [];
+    //unique set to generate Generic widgets once.
+    Set<String> widgetsSet = new Set<String>();
     if (widgetsIndex.existsSync()) {
-      output.writeLn('// generating widgets index file at ${widgetsIndex.path}');
-      List<String> widgetsIndexContent = [];
-      widgetsIndexContent.add('// auto generated widgets index file. do not modify');
       if (typeMap.allTypes.containsKey('module_core.Widget')) {
         for (var type in typeMap.getNonAbstractSubtypes(typeMap.allTypes['module_core.Widget']!)) {
-          String widgetName = type.fullName.replaceAll('.', '_');
-          var templateFile = openTemplate(widgetName + '.scss');
-          if (templateFile != null) {
-            //relativePath =
-            //output.writeLn('// file: ${templateFile.module.name} ${templateFile.path} ${templateFile.file.path}');
-            widgetsIndexContent.add('.${widgetName} {');
-            if (templateFile.module.name == 'application') {
-              String relPath = relative(Directory.current.path + '/' + templateFile.path, from:dirname(widgetsIndexPath));
-              widgetsIndexContent.add('    @import \"${relPath}\"');
-            } else {
-              widgetsIndexContent.add('    @import \"package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}\"');
-            }
-            widgetsIndexContent.add('}');
-          }
+          widgetsSet.add(type.fullName.replaceAll('.', '_'));
         }
-
-        var content = widgetsIndexContent.join("\n");
-        if (widgetsIndex.readAsStringSync() != content) {
-          //avoid rebuilding scss
-          widgetsIndex.writeAsStringSync(content);
+      }
+      for (var widgetName in widgetsSet) {
+        var templateFile = openTemplate(widgetName + '.scss');
+        if (templateFile != null) {
+          //relativePath =
+          //output.writeLn('// file: ${templateFile.module.name} ${templateFile.path} ${templateFile.file.path}');
+          widgetsIndexContent.add('.${widgetName} {');
+          if (templateFile.module.name == 'application') {
+            String relPath = relative(Directory.current.path + '/' + templateFile.path, from:dirname(widgetsIndexPath));
+            widgetsIndexContent.add('    @import \"${relPath}\"');
+          } else {
+            widgetsIndexContent.add('    @import \"package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}\"');
+          }
+          widgetsIndexContent.add('}');
+          var content = widgetsIndexContent.join("\n");
+          if (widgetsIndex.readAsStringSync() != content) {
+            //avoid rebuilding scss
+            widgetsIndex.writeAsStringSync(content);
+          }
         }
       }
     }
