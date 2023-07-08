@@ -35,13 +35,52 @@ void main() {
       expect(subtypes_test.$om.module_test1_Foo, isNotNull);
 
       expect(
-          subtypes_test.$om.container.subtypes.baseClassNamesMap,
-          equals({'module_test1.Foo': 'module_test1.Foo', 'module_test1.FooChild': 'module_test1.Foo', 'module_test1.FooChild2': 'module_test1.Foo'})
+          subtypes_test.$om.container.subtypes.allClassNames,
+          equals({'module_test1.Foo', 'module_test1.FooChild', 'module_test1.FooChild2'})
       );
 
       expect(
-          subtypes_test.$om.container.subtypesWithAbstractBase.baseClassNamesMap,
-          equals({'SubtypeOfAbstract1': 'SubtypeOfAbstract1', 'SubtypeOfAbstract2': 'SubtypeOfAbstract2', 'SubtypeOfAbstract3': 'SubtypeOfAbstract2'})
+          subtypes_test.$om.container.subtypes.allSubtypes['module_test1.Foo']!.baseClassName,
+          equals('module_test1.Foo')
+      );
+      expect(
+          subtypes_test.$om.container.subtypes.allSubtypes['module_test1.FooChild']!.baseClassName,
+          equals('module_test1.Foo')
+      );
+      expect(
+          subtypes_test.$om.container.subtypes.allSubtypes['module_test1.FooChild2']!.baseClassName,
+          equals('module_test1.Foo')
+      );
+
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract1']!.baseClassName,
+          equals('SubtypeOfAbstract1')
+      );
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract2']!.baseClassName,
+          equals('SubtypeOfAbstract2')
+      );
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.baseClassName,
+          equals('SubtypeOfAbstract2')
+      );
+
+      //test subtype annotations
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract2']!.annotations['TestAnnotation'],
+          equals(true)
+      );
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract2']!.annotations['TestAnnotationWithValue'],
+          equals('testValue')
+      );
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.annotations['TestAnnotation'],
+          equals(true)
+      );
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.annotations['TestAnnotationWithValue'],
+          equals('overridenValue')
       );
 
       expect(subtypes_test.$om.container.subtypes.allClassNames, equals(['module_test1.Foo', 'module_test1.FooChild', 'module_test1.FooChild2']));

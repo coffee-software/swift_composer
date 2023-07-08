@@ -121,14 +121,12 @@ class CompiledOmGenerator implements TemplateLoader {
       }
       output.writeLn('throw new Exception(\'no code for type\');');
       output.writeLn('}');
-      output.writeLn('List<String> get allClassNames => [');
-      for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
-        output.writeLn('\'${type.fullName}\',');
-      }
-      output.writeLn('];');
 
-      output.writeLn('Map<String, String> get baseClassNamesMap => {');
+      output.writeLn('Map<String, SubtypeInfo> get allSubtypes => {');
       for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
+
+        output.writeLn('\'${type.fullName}\': SubtypeInfo(');
+        //find base class name
         String baseClassName = type.fullName;
         for (var parentType in type.allTypeInfoPath()){
           if (parentType.element!.metadata.where((element) => element.toSource() == '@ComposeSubtypes').isNotEmpty) {
@@ -136,10 +134,39 @@ class CompiledOmGenerator implements TemplateLoader {
           }
           baseClassName = parentType.fullName;
         }
-        output.writeLn('\'${type.fullName}\' : \'${baseClassName}\',');
+        output.writeLn('\'${baseClassName}\',{');
+        //save annotations
+        List<String> overridenKeys = [];
+        for (var parentType in type.allTypeInfoPath()){
+          parentType.element!.metadata.forEach((annotation) {
+            String source = annotation.toSource();
+            source = source.replaceFirst('@', '');
+            if (['Compose', 'ComposeSubtypes'].contains(source)) {
+              //todo better list of build in annotations
+              return;
+            }
+            String key = source;
+            if (source.indexOf('(') > -1) {
+              key = source.substring(0, source.indexOf('('));
+            }
+            if (!overridenKeys.contains(key)) {
+              overridenKeys.add(key);
+              var value = 'true';
+              //todo support multiple values?
+              if (source!=key) {
+                value = source.replaceAll(key, '');
+                value = value.replaceFirst('(', '');
+                value = value.replaceFirst(')', '');
+              }
+              output.writeLn('\"$key\" : $value,');
+            }
+          });
+        }
+
+        output.writeLn('}),');
+
       }
       output.writeLn('};');
-
       output.writeLn('}');
     });
   }

@@ -13,10 +13,18 @@ const InjectConfig = true;
 //TODO:
 const InjectInstances = true;
 
-abstract class SubtypesOf<T> {
-  List<String> get allClassNames;
+class SubtypeInfo {
   //first non-abstract type of all subtypes
-  Map<String, String> get baseClassNamesMap;
+  String baseClassName;
+  Map<String, dynamic> annotations;
+  SubtypeInfo(this.baseClassName, this.annotations);
+}
+
+abstract class SubtypesOf<T> {
+
+  Map<String, SubtypeInfo> get allSubtypes;
+  Iterable<String> get allClassNames => allSubtypes.keys;
+
   String getCode<X extends T>();
   //TODO:
   //Map<String, T> get allInstances;
