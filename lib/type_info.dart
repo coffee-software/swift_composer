@@ -218,7 +218,7 @@ class TypeInfo {
         }
         switch (fieldType.fullName){
           case "String":
-            return '"' + typeConfig[field.name] + '"';
+            return '"' + typeConfig[field.name].replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"';
           case "int":
           case "double":
           case "bool":

@@ -392,7 +392,7 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeSplit();
       output.writeLn('// MERGED CONFIG');
       this.config.config.forEach((key, value) {
-        output.writeLn("// ${key}: ${value}");
+        output.writeLn("// ${key}: ${value}".replaceAll('\n', '\\n'));
       });
       output.writeSplit();
       timer.end();
