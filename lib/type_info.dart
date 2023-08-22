@@ -1013,15 +1013,18 @@ class TypeMap {
     return plugins;
   }
 
-  List<TypeInfo> getNonAbstractSubtypes(TypeInfo parentType) {
+  List<TypeInfo> getSubtypes(TypeInfo parentType, bool includeAbstract) {
+
     return allTypes.values.where((type){
       //output.writeLn("//candidate: " + type.displayName);
       if (type.element == null) return false;
       //output.writeLn("//element ok");
 
-      for (var metadataElement in (type.element as ClassElement).metadata) {
-        if (metadataElement.toSource() == '@ComposeSubtypes') {
-          return false;
+      if (!includeAbstract) {
+        for (var metadataElement in (type.element as ClassElement).metadata) {
+          if (metadataElement.toSource() == '@ComposeSubtypes') {
+            return false;
+          }
         }
       }
 
@@ -1029,7 +1032,7 @@ class TypeMap {
         return true;
       }
       //output.writeLn("//name not fit");
-      if (!type.hasInterceptor() && type.element!.isAbstract) return false;
+      if (!includeAbstract && (!type.hasInterceptor() && type.element!.isAbstract)) return false;
       //output.writeLn("//interceptor ok");
       bool fits = false;
 
@@ -1059,6 +1062,13 @@ class TypeMap {
       });
       return fits;
     }).toList();
+  }
 
+  List<TypeInfo> getAllSubtypes(TypeInfo parentType) {
+    return getSubtypes(parentType, true);
+  }
+
+  List<TypeInfo> getNonAbstractSubtypes(TypeInfo parentType) {
+    return getSubtypes(parentType, false);
   }
 }

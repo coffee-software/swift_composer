@@ -348,14 +348,13 @@ class CompiledOmGenerator implements TemplateLoader {
       widgetsIndexContent.add('// auto generated widgets index file. do not modify');
 
       if (typeMap.allTypes.containsKey('module_core.Widget')) {
-        for (var type in typeMap.getNonAbstractSubtypes(typeMap.allTypes['module_core.Widget']!)) {
+        for (var type in typeMap.getAllSubtypes(typeMap.allTypes['module_core.Widget']!)) {
           widgetsSet.add(type.fullName.replaceAll('.', '_'));
         }
       }
       for (var widgetName in widgetsSet) {
         var templateFile = openTemplate(widgetName + '.scss');
         if (templateFile != null) {
-          //relativePath =
           //output.writeLn('// file: ${templateFile.module.name} ${templateFile.path} ${templateFile.file.path}');
           widgetsIndexContent.add('.${widgetName} {');
           if (templateFile.module.name == 'application') {
