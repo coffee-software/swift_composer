@@ -765,14 +765,16 @@ class TypeInfo {
                     'as ${paramClass}',
                     'as ${fieldClass}'
                 );
-                
-                if (paramClass.startsWith('List<') && fieldClass.startsWith('List<')) {
+                if (paramClass.indexOf('<') > -1 && fieldClass.indexOf('<') > -1) {
+                  //TODO support many parameters?
+                  String paramGenericParam = paramClass.substring(paramClass.indexOf('<') + 1, paramClass.length - 1);
+                  String fieldGenericParam = fieldClass.substring(fieldClass.indexOf('<') + 1, fieldClass.length - 1);
+                  lines.add('// ${paramGenericParam} ${fieldGenericParam}');
                   part = part.replaceAll(
-                      'as ${paramClass.substring(5 , paramClass.length - 1)}',
-                      'as ${fieldClass.substring(5 , fieldClass.length - 1)}'
+                      'as ${paramGenericParam}',
+                      'as ${fieldGenericParam}'
                   );
                 }
-
                 //part = "// ${paramClass} \n" + part;
                 //part = "// ${fieldClass} \n" + part;
                 lines.add(part);
