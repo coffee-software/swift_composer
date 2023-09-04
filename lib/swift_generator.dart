@@ -117,7 +117,7 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeLn('class \$SubtypesOf' + typeInfo.flatName + ' extends SubtypesOf<' + typeInfo.uniqueName + '> {');
       output.writeLn('String getCode<X extends ' + typeInfo.uniqueName + '>(){');
       for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
-        output.writeLn('if (X == ${type.fullName}) return \'${type.fullName}\';');
+        output.writeLn('if (X == ${type.fullName}) return ${type.classCodeAsReference};');
       }
       output.writeLn('throw new Exception(\'no code for type\');');
       output.writeLn('}');
@@ -125,16 +125,16 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeLn('Map<String, SubtypeInfo> get allSubtypes => {');
       for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
 
-        output.writeLn('\'${type.fullName}\': SubtypeInfo(');
+        output.writeLn('${type.classCodeAsReference}: SubtypeInfo(');
         //find base class name
-        String baseClassName = type.fullName;
+        String baseClassCode = type.classCodeAsReference;
         for (var parentType in type.allTypeInfoPath()){
           if (parentType.element!.metadata.where((element) => element.toSource() == '@ComposeSubtypes').isNotEmpty) {
             break;
           }
-          baseClassName = parentType.fullName;
+          baseClassCode = parentType.classCodeAsReference;
         }
-        output.writeLn('\'${baseClassName}\',{');
+        output.writeLn('${baseClassCode},{');
         //save annotations
         List<String> overridenKeys = [];
         for (var parentType in type.allTypeInfoPath()){
@@ -171,6 +171,23 @@ class CompiledOmGenerator implements TemplateLoader {
     });
   }
 
+  void generateCompiledMethodsParts() {
+    for (var method in typeMap.compiledMethodsByType.keys) {
+      for (var classElement in typeMap.compiledMethodsByType[method]!.keys) {
+        output.writeLn(typeMap.compiledMethodsByType[method]![classElement]!.getPartDeclaration());
+        output.writeLn('{');
+        var stubs = typeMap.compiledMethodsByType[method]![classElement]!.stubs;
+        for (var field in stubs.keys) {
+          for (var method in stubs[field]!.keys) {
+            output.writeMany(stubs[field]![method]!);
+          }
+        }
+        output.writeLn('}');
+        //[methodPartElement]![field.enclosingElement as ClassElement]!.add('//TEST');
+      }
+    }
+  }
+
   void generateObjectManager() {
     output.writeLn('class \$ObjectManager {');
     for (var type in typeMap.allTypes.values) {
@@ -195,7 +212,7 @@ class CompiledOmGenerator implements TemplateLoader {
 
       typeMap.getNonAbstractSubtypes(typeInfo).forEach((subtypeInfo){
         if (subtypeInfo.allRequiredFields().length == 0) {
-          output.writeLn('"${subtypeInfo.fullName}": ');
+          output.writeLn('${subtypeInfo.classCodeAsReference}: ');
           output.writeLn(subtypeInfo.varName);
           //output.writeMany(subtypeInfo.generateCreator());
           output.writeLn(',');
@@ -210,16 +227,18 @@ class CompiledOmGenerator implements TemplateLoader {
     typeMap.subtypeFactories.forEach((key, subtypeFactoryInfo) {
       output.writeLn('${subtypeFactoryInfo.returnType.uniqueName} ${key} {');
 
-      output.writeLn('switch(className){');
+      //output.writeLn('switch(className){');
       for (var type in typeMap.getNonAbstractSubtypes(subtypeFactoryInfo.returnType)) {
         //TODO compare parameters by types and names?
         //type.allRequiredFields().map((f) => f.name).join(',');
         if (type.allRequiredFields().length == subtypeFactoryInfo.arguments.length - 1) {
-          output.writeLn('case \'${type.fullName}\':');
+          output.writeLn('if (className == ${type.classCodeAsReference})');
           output.writeLn('return ' + type.generateCreator() + ';');
+          //output.writeLn('case ${type.classCodeAsReference}:');
+          //output.writeLn('return ' + type.generateCreator() + ';');
         }
       }
-      output.writeLn('}');
+      //output.writeLn('}');
       output.writeLn('throw new Exception(\'no type for \' + className);');
       output.writeLn('}');
     });
@@ -227,6 +246,9 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeLn('SubtypesOf<${typeInfo.uniqueName}> subtypesOf${typeInfo.flatName} = new \$SubtypesOf' + typeInfo.flatName + '();');
     });
 
+    output.writeLn('final List<String> s = const [');
+    output.writeLn(typeMap.allSymbols.map((e) => '"$e"').join(','));
+    output.writeLn('];');
     output.writeLn('}');
     output.writeLn('\$ObjectManager \$om = new \$ObjectManager();');
   }
@@ -454,6 +476,8 @@ class CompiledOmGenerator implements TemplateLoader {
       timer.start('om');
       output.writeSplit();
       generateSubtypesOf();
+      output.writeSplit();
+      generateCompiledMethodsParts();
       output.writeSplit();
       generateObjectManager();
       timer.end();

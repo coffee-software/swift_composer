@@ -13,6 +13,22 @@ abstract class Base {
   late foo.FooChild three;
   @Create
   late bar.BarChild four;
+
+  @Compile
+  void copyFieldsFromJson(Map source);
+
+  @Factory
+  foo.FooChild createFooChild(String requiredString);
+
+  @CompileFieldsOfType
+  void _copyFieldsFromJsonFoo(Map source, String name, foo.Foo field) {
+    field = this.createFooChild(source[name]);
+  }
+
+  @CompileFieldsOfType
+  void _copyFieldsFromJsonBar(Map source, String name, bar.Bar field) {
+    field = $om.bar_BarChild;
+  }
 }
 
 @Compose
@@ -70,21 +86,6 @@ abstract class Container extends Base {
     var ret = createContainer();
     ret.copyFieldsFromJson(source);
     return ret;
-  }
-  @Compile
-  void copyFieldsFromJson(Map source);
-
-  @Factory
-  foo.FooChild createFooChild(String requiredString);
-
-  @CompileFieldsOfType
-  void _copyFieldsFromJsonFoo(Map source, String name, foo.Foo field) {
-    field = createFooChild(source[name]);
-  }
-
-  @CompileFieldsOfType
-  void _copyFieldsFromJsonBar(Map source, String name, bar.Bar field) {
-    field = $om.bar_BarChild;
   }
 
 }

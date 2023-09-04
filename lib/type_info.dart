@@ -8,7 +8,6 @@ import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:build/build.dart';
-import 'package:swift_composer/swift_generator.dart';
 
 import 'tools.dart';
 
@@ -37,7 +36,7 @@ extension MethodElementSource on MethodElement {
       part = result.getElementDeclaration(this)!.node.toSource();
     }
     //named parameters can be defined
-    part = part.substring(part.indexOf(') {') + 1);
+    part = part.substring(part.indexOf(') {') + 3, part.length - 1);
     sourcesCache[this.hashCode] = part;
     //part = '//method_hash:' + this.hashCode.toString() + "\n" + part;
     return part;
@@ -74,6 +73,14 @@ class TypeInfo {
   }
 
   bool get isNullable => (type.nullabilitySuffix == NullabilitySuffix.question);
+
+  // name accessible in local context
+  String get classCodeAsReference {
+    if (!typeMap.allSymbols.contains(fullName)) {
+      typeMap.allSymbols.add(fullName);
+    }
+    return "\$om.s[${typeMap.allSymbols.indexOf(fullName)}]";
+  }
 
   // name accessible in local context
   String get fullName {
@@ -231,14 +238,14 @@ class TypeInfo {
         typeMap.subtypeInstanes[type.uniqueName] = type;
         return '\$om.instancesOf${type.flatName}';
       case '@InjectClassName':
-        return '"' + fullName + '"';
+        return classCodeAsReference;
       case '@InjectClassNames':
         List<String> path = [];
         for (var type in allTypeInfoPath()){
           if (field.enclosingElement == type.element) break;
-          path.add(type.fullName);
+          path.add(type.classCodeAsReference);
         }
-        return '[' + path.reversed.map((s)=>"'$s'").join(',') + ']';
+        return '[' + path.reversed.join(',') + ']';
       default:
         return null;
     }
@@ -269,11 +276,17 @@ class TypeInfo {
     if (element != null) {
       yield element!;
     }
-    for (var st in element!.allSupertypes) {
-      if (st.element.name == 'Object') {
-        break;
+    yield* parentClassElementsPath();
+  }
+
+  Iterable<ClassElement> parentClassElementsPath() sync* {
+    if (element != null) {
+      for (var st in element!.allSupertypes) {
+        if (st.element.name == 'Object') {
+          break;
+        }
+        yield st.element as ClassElement;
       }
-      yield st.element as ClassElement;
     }
   }
 
@@ -332,7 +345,6 @@ class TypeInfo {
 
   List<FieldElement> allFields() {
     List<FieldElement> allFields = [];
-    if (element == null) return allFields;
     for (var element in allClassElementsPath()) {
       for (var m in element.mixins) {
         for (var f in m.element.fields) {
@@ -621,8 +633,6 @@ class TypeInfo {
     for (var fieldElement in allFields()) {
       for (var metadataElement in fieldElement.getter!.metadata) {
         if (metadataElement.toSource() == '@Template') {
-
-
           String? templateBody = templateLoader.load(flatName + '.' + fieldElement.name);
           if (templateBody != null) {
             output.writeLn("${fieldElement.type.toString()} get ${fieldElement.name} => \'\'\'");
@@ -671,7 +681,8 @@ class TypeInfo {
       lines.add('return ' + best.generateCreator() + ';');
     } else if (elementInjectionType(methodElement) == '@Compile') {
       lines.add('//compiled method');
-      //TODO: add original method ??
+      //TODO: add original method if not abstract ??
+      List<CompiledFieldMethodPart> calledParts = [];
       for (var methodPartElement in allMethods()) {
         if (methodPartElement.name.startsWith('_' + methodElement.name)) {
           if (elementInjectionType(methodPartElement) == '@CompilePart') {
@@ -679,112 +690,28 @@ class TypeInfo {
             lines.add(part);
           } else if (elementInjectionType(methodPartElement) == '@CompileFieldsOfType') {
 
-            String? requireAnnotation = null;
-            for (var m in methodPartElement.metadata) {
-              if (m.toSource().startsWith('@AnnotatedWith(')) {
-                requireAnnotation = '@' + m.toSource().substring(15, m.toSource().length - 1);
-                lines.add('//' + requireAnnotation);
+            //var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
+            if (!typeMap.compiledMethodsByType.containsKey(methodElement)) {
+              typeMap.compiledMethodsByType[methodElement] = {};
+              lines.add('//dbg: ' + methodElement.name);
+            }
+
+
+
+            for (var field in allFields()) {
+              var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis');
+              if (compiledPart != null && !calledParts.contains(compiledPart)) {
+                lines.add(compiledPart.getCallExpression('this'));
+                calledParts.add(compiledPart);
               }
             }
-            
-            //var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
-
-            Future<void> filedBitGenerator(String prefix, FieldElement field) async {
-              ParameterElement fieldParameter = methodPartElement.parameters.where((element) => element.name == 'field').first;
-
-              if (typeMap.typeSystem.isSubtypeOf(field.type, fieldParameter.type) &&
-                  //dynamic is nullable but returns empty suffix
-                (fieldParameter.type.isDynamic || field.type.nullabilitySuffix == fieldParameter.type.nullabilitySuffix)) {
-
-                if (requireAnnotation != null) {
-                  bool pass = false;
-                  for (var m in field.metadata) {
-                    //support for parametrised required annotations
-                    if (m.toSource() == requireAnnotation || m.toSource().startsWith(requireAnnotation + '(')) pass = true;
-                  }
-                  if (!pass) return;
-                }
-
-                var compiledFieldType = typeMap.fromDartType(field.type, context:typeArgumentsMap());
-                lines.add('{');
-                //magic parameter match
-                for (var methodParameter in methodPartElement.parameters) {
-                  if (methodElement.parameters.where((element) => element.name == methodParameter.name).isNotEmpty) {
-                    //this parameter comes from compiled method
-                    continue;
-                  }
-                  if (methodParameter.name == fieldParameter.name) {
-                    //this is a special param
-                    continue;
-                  }
-                  var methodParameterValue = 'null';
-                  if (methodParameter.name == 'name') {
-                    methodParameterValue = '"${field.name}"';
-                  } else if (methodParameter.name == 'className') {
-                    methodParameterValue = '"${compiledFieldType.uniqueName}"';
-                  } else if (methodParameter.isOptional) {
-                    methodParameterValue = methodParameter.defaultValueCode!;
-                    var nameParts = methodParameter.name.split('_');
-                    String annotationName = '@' + nameParts[0][0].toUpperCase() + nameParts[0].substring(1);
-                    if (nameParts.length == 1) {
-                      methodParameterValue = 'false';
-                      for (var fieldMeta in field.metadata) {
-                        if (fieldMeta.toSource() == annotationName) {
-                          methodParameterValue = 'true';
-                        }
-                      }
-                    } else {
-                      for (var fieldMeta in field.metadata) {
-                        if (fieldMeta.toSource().startsWith(annotationName + '(')) {
-                          DartObject annotationField = fieldMeta.computeConstantValue()!.getField(nameParts[1])!;
-                          switch (annotationField.type!.getDisplayString(withNullability: true)) {
-                            case 'String':
-                              methodParameterValue = '"' + annotationField.toStringValue()! + '"';
-                              break;
-                            case 'int':
-                              methodParameterValue = annotationField.toIntValue().toString();
-                              break;
-                            default :
-                              methodParameterValue = annotationField.toString();
-                          }
-                        }
-                      }
-                    }
-                  }
-                  lines.add('const ${methodParameter.name} = $methodParameterValue;');
-                }
-                String part = await methodPartElement.getSourceCode(this.typeMap.step);
-
-                if (methodPartElement.parameters.indexWhere((element) => element.name == 'field') > -1) {
-                  part = part.replaceAll(fieldParameter.name, '${prefix}${field.name}');
-                }
-
-                String paramClass = fieldParameter.type.getDisplayString(withNullability: false);
-                String fieldClass = compiledFieldType.uniqueName;
-                part = part.replaceAll(
-                    'as ${paramClass}',
-                    'as ${fieldClass}'
-                );
-                if (paramClass.indexOf('<') > -1 && fieldClass.indexOf('<') > -1) {
-                  //TODO support many parameters?
-                  String paramGenericParam = paramClass.substring(paramClass.indexOf('<') + 1, paramClass.length - 1);
-                  String fieldGenericParam = fieldClass.substring(fieldClass.indexOf('<') + 1, fieldClass.length - 1);
-                  lines.add('// ${paramGenericParam} ${fieldGenericParam}');
-                  part = part.replaceAll(
-                      'as ${paramGenericParam}',
-                      'as ${fieldGenericParam}'
-                  );
-                }
-                //part = "// ${paramClass} \n" + part;
-                //part = "// ${fieldClass} \n" + part;
-                lines.add(part);
-                lines.add('}');
-              }
-            };
-            for (var f in allFields()) await filedBitGenerator('this.', f);
             for (var plugin in plugins) {
-              for (var f in plugin.allFields()) {
-                await filedBitGenerator('this.${plugin.varName}.', f);
+              for (var field in plugin.allFields()) {
+                var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis.parent');
+                if (compiledPart != null && !calledParts.contains(compiledPart)) {
+                  lines.add(compiledPart.getCallExpression('this.${plugin.varName}'));
+                  calledParts.add(compiledPart);
+                }
               }
             }
           };
@@ -849,6 +776,161 @@ class SubtypeFactoryInfo {
   SubtypeFactoryInfo(this.returnType, this.arguments);
 }
 
+/**
+ * used to generate static method cfs_ with field logic per class
+ */
+class CompiledFieldMethodPart {
+  MethodElement methodElement;
+  TypeInfo type;
+  TypeMap typeMap;
+  Map<FieldElement, Map<MethodElement, List<String>>> stubs = {};
+  CompiledFieldMethodPart(this.typeMap, this.methodElement, this.type);
+
+  String get methodName => 'cfs_' + methodElement.name + type.flatName;
+
+  getPartDeclaration() {
+    List<String> params = [];
+    params.add("${type.fullName} dis");
+    params.addAll(methodElement.parameters.map((mp){
+      TypeInfo parameterType = typeMap.fromDartType(mp.type);
+      return "${parameterType.uniqueName} ${mp.name}";
+    }));
+    return 'void $methodName(' + params.join(",") + ')';
+  }
+
+  getCallExpression(String thisName) {
+    List<String> params = [thisName];
+    params.addAll(methodElement.parameters.map((mp) => mp.name));
+    return '$methodName(' + params.join(",") + ');';
+  }
+
+  /**
+   * analyse fieldMethodPart if fits compiledMethod
+   */
+  static Future<CompiledFieldMethodPart?> addFieldMethodPart(TypeInfo type, MethodElement compiledMethod, MethodElement fieldMethodPart, FieldElement field, String thisReplace) async {
+
+    ParameterElement fieldParameter = fieldMethodPart.parameters.where((element) => element.name == 'field').first;
+
+    if (!type.typeMap.typeSystem.isSubtypeOf(field.type, fieldParameter.type) ||
+        //dynamic is nullable but returns empty suffix
+        !(fieldParameter.type.isDynamic || field.type.nullabilitySuffix == fieldParameter.type.nullabilitySuffix)) {
+      return null;
+    }
+
+    String? requireAnnotation = null;
+    for (var m in fieldMethodPart.metadata) {
+      if (m.toSource().startsWith('@AnnotatedWith(')) {
+        requireAnnotation = '@' + m.toSource().substring(15, m.toSource().length - 1);
+      }
+    }
+
+    if (requireAnnotation != null) {
+      bool pass = false;
+      for (var m in field.metadata) {
+        //support for parametrised required annotations
+        if (m.toSource() == requireAnnotation || m.toSource().startsWith(requireAnnotation + '(')) pass = true;
+      }
+      if (!pass) return null;
+    }
+
+    var enclosingType = type.typeMap.fromDartType((field.enclosingElement as ClassElement).thisType, context:type.typeArgumentsMap());
+
+    CompiledFieldMethodPart compiledPart;
+    if (!type.typeMap.compiledMethodsByType[compiledMethod]!.containsKey(enclosingType.uniqueName)) {
+      type.typeMap.compiledMethodsByType[compiledMethod]![enclosingType.uniqueName] = compiledPart = new CompiledFieldMethodPart(type.typeMap, compiledMethod, enclosingType);
+    } else {
+      compiledPart = type.typeMap.compiledMethodsByType[compiledMethod]![enclosingType.uniqueName]!;
+    }
+
+    if (!compiledPart.stubs.containsKey(field) || !compiledPart.stubs[field]!.containsKey(fieldMethodPart)) {
+      //generate stub;
+      if (!compiledPart.stubs.containsKey(field)) {
+        compiledPart.stubs[field] = {};
+      }
+      List<String> stubLines = compiledPart.stubs[field]![fieldMethodPart] = [];
+
+
+      var compiledFieldType = type.typeMap.fromDartType(field.type, context:type.typeArgumentsMap());
+      stubLines.add('{');
+      //magic parameter match
+      for (var methodParameter in fieldMethodPart.parameters) {
+        if (compiledMethod.parameters.where((element) => element.name == methodParameter.name).isNotEmpty) {
+          //this parameter comes from compiled method
+          continue;
+        }
+        if (methodParameter.name == fieldParameter.name) {
+          //this is a special param
+          continue;
+        }
+        var methodParameterValue = 'null';
+        if (methodParameter.name == 'name') {
+          methodParameterValue = '"${field.name}"';
+        } else if (methodParameter.name == 'className') {
+          methodParameterValue = '"${compiledFieldType.uniqueName}"';
+        } else if (methodParameter.isOptional) {
+          methodParameterValue = methodParameter.defaultValueCode!;
+          var nameParts = methodParameter.name.split('_');
+          String annotationName = '@' + nameParts[0][0].toUpperCase() + nameParts[0].substring(1);
+          if (nameParts.length == 1) {
+            methodParameterValue = 'false';
+            for (var fieldMeta in field.metadata) {
+              if (fieldMeta.toSource() == annotationName) {
+                methodParameterValue = 'true';
+              }
+            }
+          } else {
+            for (var fieldMeta in field.metadata) {
+              if (fieldMeta.toSource().startsWith(annotationName + '(')) {
+                DartObject annotationField = fieldMeta.computeConstantValue()!.getField(nameParts[1])!;
+                switch (annotationField.type!.getDisplayString(withNullability: true)) {
+                  case 'String':
+                    methodParameterValue = '"' + annotationField.toStringValue()! + '"';
+                    break;
+                  case 'int':
+                    methodParameterValue = annotationField.toIntValue().toString();
+                    break;
+                  default :
+                    methodParameterValue = annotationField.toString();
+                }
+              }
+            }
+          }
+        }
+        stubLines.add('const ${methodParameter.name} = $methodParameterValue;');
+      }
+      String part = await fieldMethodPart.getSourceCode(type.typeMap.step);
+
+      if (fieldMethodPart.parameters.indexWhere((element) => element.name == 'field') > -1) {
+        part = part.replaceAll(fieldParameter.name, 'dis.${field.name}');
+      }
+      //TODO
+      part = part.replaceAll('this', thisReplace);
+
+      String paramClass = fieldParameter.type.getDisplayString(withNullability: false);
+      String fieldClass = compiledFieldType.uniqueName;
+      part = part.replaceAll(
+          'as ${paramClass}',
+          'as ${fieldClass}'
+      );
+      if (paramClass.indexOf('<') > -1 && fieldClass.indexOf('<') > -1) {
+        //TODO support many parameters?
+        String paramGenericParam = paramClass.substring(paramClass.indexOf('<') + 1, paramClass.length - 1);
+        String fieldGenericParam = fieldClass.substring(fieldClass.indexOf('<') + 1, fieldClass.length - 1);
+        part = part.replaceAll(
+            'as ${paramGenericParam}',
+            'as ${fieldGenericParam}'
+        );
+      }
+      //part = "// ${paramClass} \n" + part;
+      //part = "// ${fieldClass} \n" + part;
+      stubLines.add(part);
+      stubLines.add('}');
+    }
+    return compiledPart;
+  }
+
+}
+
 class TypeMap {
 
   TypeSystem typeSystem;
@@ -856,8 +938,9 @@ class TypeMap {
   DiConfig config;
   BuildStep step;
   //Map<LibraryElement, String?> importedLibrariesMap = {};
-
   TypeMap(this.output, this.typeSystem, this.step, this.config);
+
+  List<String> allSymbols = [];
 
   Map<String, TypeInfo> allTypes = {};
   Map<String, TypeInfo> subtypeInstanes = {};
@@ -865,6 +948,9 @@ class TypeMap {
   Map<String, SubtypeFactoryInfo> subtypeFactories = {};
 
   Map<ClassElement, String> classNames = {};
+
+  //indexed by compiled method and part declaring class name
+  Map<MethodElement, Map<String, CompiledFieldMethodPart>> compiledMethodsByType = {};
 
   /**
    *
@@ -908,12 +994,6 @@ class TypeMap {
         name = classNames[type.element]!;
       }
     }*/
-
-    //output.writeLn("//LOOKING FORL " + name);
-    //output.writeLn("//THIS IS: ${type.hashCode}");
-    allTypes.forEach((key, value) {
-      //output.writeLn("//$key => ${value.element?.thisType.hashCode}");
-    });
     //output.writeLn('//!!!!' + type.getDisplayString(withNullability: true) + ' <=> ' + (type.element == null ? 'NULL' : type.element!.name!));
 
     TypeInfo ret = new TypeInfo(
