@@ -851,6 +851,7 @@ class CompiledFieldMethodPart {
 
 
       var compiledFieldType = type.typeMap.fromDartType(field.type, context:type.typeArgumentsMap());
+
       stubLines.add('{');
       //magic parameter match
       for (var methodParameter in fieldMethodPart.parameters) {
@@ -867,6 +868,8 @@ class CompiledFieldMethodPart {
           methodParameterValue = '"${field.name}"';
         } else if (methodParameter.name == 'className') {
           methodParameterValue = '"${compiledFieldType.uniqueName}"';
+        } else if (fieldParameter.type.isDartCoreEnum && methodParameter.name == 'values') {
+          methodParameterValue = '${compiledFieldType.uniqueName}.values';
         } else if (methodParameter.isOptional) {
           methodParameterValue = methodParameter.defaultValueCode!;
           var nameParts = methodParameter.name.split('_');
