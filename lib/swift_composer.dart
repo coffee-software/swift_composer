@@ -17,7 +17,8 @@ class SubtypeInfo {
   //first non-abstract type of all subtypes
   String baseClassName;
   Map<String, dynamic> annotations;
-  SubtypeInfo(this.baseClassName, this.annotations);
+  Map<String, dynamic> inheritedAnnotations;
+  SubtypeInfo(this.baseClassName, this.annotations, this.inheritedAnnotations);
 }
 
 abstract class SubtypesOf<T> {

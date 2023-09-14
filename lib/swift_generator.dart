@@ -111,6 +111,33 @@ class CompiledOmGenerator implements TemplateLoader {
     return null;
   }
 
+  Map<String, String> getAnnotations(ClassElement element) {
+    Map<String, String> ret = {};
+    element.metadata.forEach((annotation) {
+      String source = annotation.toSource();
+      source = source.replaceFirst('@', '');
+      if (['Compose', 'ComposeSubtypes'].contains(source)) {
+        //todo better list of build in annotations
+        return;
+      }
+      String key = source;
+      if (source.indexOf('(') > -1) {
+        key = source.substring(0, source.indexOf('('));
+      }
+      if (!ret.containsKey(key)) {
+        var value = 'true';
+        //todo support multiple values?
+        if (source!=key) {
+          value = source.replaceAll(key, '');
+          value = value.replaceFirst('(', '');
+          value = value.replaceFirst(')', '');
+        }
+        ret[key] = value;
+      }
+    });
+    return ret;
+  }
+
   void generateSubtypesOf() {
     typeMap.subtypesOf.values.forEach((typeInfo) {
 
@@ -136,33 +163,19 @@ class CompiledOmGenerator implements TemplateLoader {
         }
         output.writeLn('${baseClassCode},{');
         //save annotations
-        List<String> overridenKeys = [];
-        for (var parentType in type.allTypeInfoPath()){
-          parentType.element!.metadata.forEach((annotation) {
-            String source = annotation.toSource();
-            source = source.replaceFirst('@', '');
-            if (['Compose', 'ComposeSubtypes'].contains(source)) {
-              //todo better list of build in annotations
-              return;
-            }
-            String key = source;
-            if (source.indexOf('(') > -1) {
-              key = source.substring(0, source.indexOf('('));
-            }
-            if (!overridenKeys.contains(key)) {
-              overridenKeys.add(key);
-              var value = 'true';
-              //todo support multiple values?
-              if (source!=key) {
-                value = source.replaceAll(key, '');
-                value = value.replaceFirst('(', '');
-                value = value.replaceFirst(')', '');
-              }
+        var myAnnotations = getAnnotations(type.element!);
+        myAnnotations.forEach((key, value) {
+          output.writeLn('\"$key\" : $value,');
+        });
+        output.writeLn('}, {');
+        //save inherited annotations
+        for (var parentElement in type.parentClassElementsPath()){
+          getAnnotations(parentElement).forEach((key, value) {
+            if (!myAnnotations.containsKey(key)) {
               output.writeLn('\"$key\" : $value,');
             }
           });
         }
-
         output.writeLn('}),');
 
       }

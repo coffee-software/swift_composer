@@ -76,6 +76,10 @@ void main() {
       );
       expect(
           subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.annotations['TestAnnotation'],
+          equals(null)
+      );
+      expect(
+          subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.inheritedAnnotations['TestAnnotation'],
           equals(true)
       );
       expect(
