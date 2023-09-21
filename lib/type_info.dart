@@ -623,7 +623,7 @@ class TypeInfo {
           return "${parameterType.uniqueName} ${mp.name}";
         }).join(","));
 
-        output.writeLn("){");
+        output.writeLn(") ${methodElement.isAsynchronous ? 'async' : ''} {");
         output.writeMany(methodLines);
         output.writeLn("}");
       }
@@ -720,7 +720,6 @@ class TypeInfo {
       //lines.add(methodElement.computeNode().body.toSource());
     } else {
       //check if method has any plugins
-
       Map<MethodElement, TypeInfo> beforePlugins = {};
       Map<MethodElement, TypeInfo> afterPlugins = {};
       plugins.forEach((p){
@@ -744,7 +743,7 @@ class TypeInfo {
       }
       for (var pluginMethod in beforePlugins.keys) {
         String pluginName = "${beforePlugins[pluginMethod]!.varName}";
-        lines.add('args = ${pluginName}.${pluginMethod.name}($beforeArgsStr);');
+        lines.add('args = ${pluginMethod.isAsynchronous ? 'await' : ''} ${pluginName}.${pluginMethod.name}($beforeArgsStr);');
       }
       if (beforePlugins.length > 0) {
         int i = 0;
