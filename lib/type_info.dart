@@ -831,7 +831,10 @@ class CompiledFieldMethodPart {
       }
       if (!pass) return null;
     }
-
+    if (!(field.enclosingElement is ClassElement)) {
+      //TODO mixins
+      return null;
+    }
     var enclosingType = type.typeMap.fromDartType((field.enclosingElement as ClassElement).thisType, context:type.typeArgumentsMap());
 
     CompiledFieldMethodPart compiledPart;
