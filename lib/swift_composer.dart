@@ -58,6 +58,9 @@ abstract class TypePlugin<T> {
   @Require
   late T parent;
 
+  //TODO refactor
+  T get decorated => parent;
+
   ST sibling<ST>() {
     return (parent as Pluggable).plugin<ST>();
   }

@@ -752,13 +752,13 @@ class TypeInfo {
           i++;
         });
       }
-      bool isVoid = methodElement.returnType.isVoid;
+      bool isVoid = (methodElement.returnType is VoidType) || (methodElement.returnType.getDisplayString(withNullability: false) == 'Future<void>');
       if (beforePlugins.length + afterPlugins.length > 0) {
-        lines.add((!isVoid ? 'var ret = ' : '') + 'super.${methodElement.name}($paramsStr);');
+        lines.add((!isVoid ? 'var ret = ' : '') + (methodElement.isAsynchronous ? 'await ' : '') + 'super.${methodElement.name}($paramsStr);');
       }
       for (var pluginMethod in afterPlugins.keys) {
         String pluginName = "${afterPlugins[pluginMethod]!.varName}";
-        lines.add((!isVoid ? 'ret = ' : '') + '${pluginName}.${pluginMethod.name}(${isVoid ? '' : 'ret'});');
+        lines.add((!isVoid ? 'ret = ' : '') + (pluginMethod.isAsynchronous ? 'await ' : '') + '${pluginName}.${pluginMethod.name}(${isVoid ? '' : 'ret'});');
       }
       if (!isVoid && (beforePlugins.length + afterPlugins.length > 0)) {
         lines.add('return ret;');
