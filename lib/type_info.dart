@@ -952,7 +952,7 @@ class TypeMap {
   Map<String, TypeInfo> subtypesOf = {};
   Map<String, SubtypeFactoryInfo> subtypeFactories = {};
 
-  Map<ClassElement, String> classNames = {};
+  Map<InterfaceElement, String> classNames = {};
 
   //indexed by compiled method and part declaring class name
   Map<MethodElement, Map<String, CompiledFieldMethodPart>> compiledMethodsByType = {};
@@ -962,6 +962,16 @@ class TypeMap {
    */
   void registerClassElement(String fullName, Element element) async {
     if (element is ClassElement) {
+      if (!classNames.containsKey(element)) {
+        classNames[element] = fullName;
+        TypeInfo elementType = new TypeInfo(
+            this,
+            element.thisType,
+            config
+        );
+        allTypes[elementType.uniqueName] = elementType;
+      }
+    } else if (element is EnumElement) {
       if (!classNames.containsKey(element)) {
         classNames[element] = fullName;
         TypeInfo elementType = new TypeInfo(
