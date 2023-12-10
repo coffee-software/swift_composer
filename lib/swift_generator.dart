@@ -354,10 +354,10 @@ class CompiledOmGenerator implements TemplateLoader {
               .last;
           name = name.substring(0, name.length - 5);
           String content = await File(file.path).readAsStringSync();
-          output.writeLn('// config file for module_' + name + ' ' + file.path);
+          output.writeLn('// config file for ' + name + ' ' + file.path);
           var yaml = loadYaml(content);
           if (yaml is YamlMap) {
-            config.append(yaml.value, 'module_' + name);
+            config.append(yaml.value, name == 'app' ? null : name);
           }
         }
 
