@@ -961,7 +961,7 @@ class TypeMap {
    *
    */
   void registerClassElement(String fullName, Element element) async {
-    if (element is ClassElement) {
+    if (element is InterfaceElement) {
       if (!classNames.containsKey(element)) {
         classNames[element] = fullName;
         TypeInfo elementType = new TypeInfo(
@@ -969,17 +969,22 @@ class TypeMap {
             element.thisType,
             config
         );
-        allTypes[elementType.uniqueName] = elementType;
-      }
-    } else if (element is EnumElement) {
-      if (!classNames.containsKey(element)) {
-        classNames[element] = fullName;
-        TypeInfo elementType = new TypeInfo(
-            this,
-            element.thisType,
-            config
-        );
-        allTypes[elementType.uniqueName] = elementType;
+        output.writeLn('//register: ' + elementType.uniqueName);
+
+        allTypes[fullName] = elementType;
+      } else if (fullName != classNames[element]){
+
+        // in case of modules using (but not requiring) other modules,
+        // import order might cause class to be available in multiple namespaces
+        var path = element.declaration.librarySource!.fullName.split('/');
+        String? realModuleName = path.length > 1 ? path.elementAt(1) : null;
+        String importModuleName = fullName.split('.').first;
+        if (realModuleName == importModuleName) {
+          // replace class info with proper namespace
+          allTypes[fullName] = allTypes[classNames[element]!]!;
+          allTypes.remove(classNames[element]!);
+          classNames[element] = fullName;
+        }
       }
     }
   }
