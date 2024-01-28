@@ -1,3 +1,15 @@
+# 0.8.0
+
+* change name of config files
+* add SubtypeInfo and refactor inject by type
+* fix enums
+* support for async method plugins
+* refactor imports handling
+* compiled methods optimisation
+* fixes for widgets generation
+* support for require annotation with value
+* other bugfixes
+
 # 0.7.0
 
 * support for mixins
