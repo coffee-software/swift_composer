@@ -812,7 +812,7 @@ class CompiledFieldMethodPart {
 
     if (!type.typeMap.typeSystem.isSubtypeOf(field.type, fieldParameter.type) ||
         //dynamic is nullable but returns empty suffix
-        !(fieldParameter.type.isDynamic || field.type.nullabilitySuffix == fieldParameter.type.nullabilitySuffix)) {
+        !(fieldParameter.type is DynamicType || field.type.nullabilitySuffix == fieldParameter.type.nullabilitySuffix)) {
       return null;
     }
 
