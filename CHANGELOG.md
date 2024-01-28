@@ -1,3 +1,7 @@
+# 0.8.1
+
+* update sdk dependency
+
 # 0.8.0
 
 * change name of config files
