@@ -887,12 +887,25 @@ class CompiledFieldMethodPart {
             for (var fieldMeta in field.metadata) {
               if (fieldMeta.toSource().startsWith(annotationName + '(')) {
                 DartObject annotationField = fieldMeta.computeConstantValue()!.getField(nameParts[1])!;
-                switch (annotationField.type!.getDisplayString(withNullability: true)) {
+                var annotationValue = annotationField.type!.getDisplayString(withNullability: true);
+                switch (annotationValue) {
+                  case 'Type':
+                    //allow passing type as annotation
+                    String typeName = fieldMeta.toSource();
+                    typeName = typeName.substring(typeName.indexOf('(') + 1, typeName.indexOf(')'));
+                    if (compiledPart.typeMap.allTypes.containsKey(typeName)) {
+                      methodParameterValue = compiledPart.typeMap.generateTypeGetter(compiledPart.typeMap.allTypes[typeName]!);
+                    } else {
+                      methodParameterValue = "null";
+                    }
+                    break;
                   case 'String':
-                    methodParameterValue = '"' + annotationField.toStringValue()! + '"';
+                    methodParameterValue =
+                        '"' + annotationField.toStringValue()! + '"';
                     break;
                   case 'int':
-                    methodParameterValue = annotationField.toIntValue().toString();
+                    methodParameterValue =
+                        annotationField.toIntValue().toString();
                     break;
                   default :
                     methodParameterValue = annotationField.toString();
@@ -901,7 +914,11 @@ class CompiledFieldMethodPart {
             }
           }
         }
-        stubLines.add('const ${methodParameter.name} = $methodParameterValue;');
+        if (methodParameterValue.startsWith('\$')) {
+          stubLines.add('var ${methodParameter.name} = $methodParameterValue;');
+        } else {
+          stubLines.add('const ${methodParameter.name} = $methodParameterValue;');
+        }
       }
       String part = await fieldMethodPart.getSourceCode(type.typeMap.step);
 
