@@ -886,7 +886,12 @@ class CompiledFieldMethodPart {
           } else {
             for (var fieldMeta in field.metadata) {
               if (fieldMeta.toSource().startsWith(annotationName + '(')) {
-                DartObject annotationField = fieldMeta.computeConstantValue()!.getField(nameParts[1])!;
+                var constantValue = fieldMeta.computeConstantValue();
+                if (constantValue == null) {
+                  methodParameterValue = '"COMPUTATION ERROR"';
+                  break;
+                }
+                DartObject annotationField = constantValue.getField(nameParts[1])!;
                 var annotationValue = annotationField.type!.getDisplayString(withNullability: true);
                 switch (annotationValue) {
                   case 'Type':
