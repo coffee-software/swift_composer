@@ -201,6 +201,9 @@ class TypeInfo {
   }
 
   String? getFieldInitializationValue(TypeInfo fieldType, FieldElement field) {
+    if (field.getter == null) {
+      return null;
+    }
     switch (elementInjectionType(field.getter!)) {
       case '@Inject':
         if (fieldType.fullName == 'SubtypesOf') {
@@ -631,7 +634,7 @@ class TypeInfo {
 
     //generted template methods
     for (var fieldElement in allFields()) {
-      for (var metadataElement in fieldElement.getter!.metadata) {
+      for (var metadataElement in fieldElement.getter?.metadata ?? []) {
         if (metadataElement.toSource() == '@Template') {
           String? templateBody = templateLoader.load(flatName + '.' + fieldElement.name);
           if (templateBody != null) {
