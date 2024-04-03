@@ -888,7 +888,7 @@ class CompiledFieldMethodPart {
             }
           } else {
             for (var fieldMeta in field.metadata) {
-              if (fieldMeta.toSource().startsWith(annotationName + '(')) {
+              if (fieldMeta.toSource().startsWith(annotationName + '(') || fieldMeta.toSource().startsWith(annotationName + '.t(')) {
                 var constantValue = fieldMeta.computeConstantValue();
                 if (constantValue == null) {
                   methodParameterValue = '"COMPUTATION ERROR"';
