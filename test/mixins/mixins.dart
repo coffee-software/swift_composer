@@ -13,10 +13,11 @@ abstract class TestMixin1 {
 }
 
 @ComposeSubtypes
-abstract class TestMixin2 {
+mixin TestMixin2 {
 
   @FieldAnnotation
   String mixin2Field = '';
+
 }
 
 @Compose

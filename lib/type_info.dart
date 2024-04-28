@@ -699,8 +699,6 @@ class TypeInfo {
               lines.add('//dbg: ' + methodElement.name);
             }
 
-
-
             for (var field in allFields()) {
               var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis');
               if (compiledPart != null && !calledParts.contains(compiledPart)) {
@@ -834,12 +832,17 @@ class CompiledFieldMethodPart {
       }
       if (!pass) return null;
     }
-    if (!(field.enclosingElement is ClassElement)) {
-      //TODO mixins
+
+
+    var enclosingType = (field.enclosingElement is ClassElement) ?
+        type.typeMap.fromDartType((field.enclosingElement as ClassElement).thisType, context:type.typeArgumentsMap())
+        : (field.enclosingElement is MixinElement) ?
+            type.typeMap.fromDartType((field.enclosingElement as MixinElement).thisType, context:type.typeArgumentsMap())
+            : null;
+
+    if (enclosingType == null) {
       return null;
     }
-    var enclosingType = type.typeMap.fromDartType((field.enclosingElement as ClassElement).thisType, context:type.typeArgumentsMap());
-
     CompiledFieldMethodPart compiledPart;
     if (!type.typeMap.compiledMethodsByType[compiledMethod]!.containsKey(enclosingType.uniqueName)) {
       type.typeMap.compiledMethodsByType[compiledMethod]![enclosingType.uniqueName] = compiledPart = new CompiledFieldMethodPart(type.typeMap, compiledMethod, enclosingType);
