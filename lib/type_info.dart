@@ -869,6 +869,7 @@ class CompiledFieldMethodPart {
           continue;
         }
         var methodParameterValue = 'null';
+        //var methodParameterType = methodParameter.type.toString();
         if (methodParameter.name == 'name') {
           methodParameterValue = '"${field.name}"';
         } else if (methodParameter.name == 'className') {
