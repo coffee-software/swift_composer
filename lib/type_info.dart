@@ -226,13 +226,19 @@ class TypeInfo {
             return null;
           }
         }
-        switch (fieldType.fullName){
+        switch (fieldType.uniqueName){
           case "String":
+          case "String?":
             return '"' + typeConfig[field.name].replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"';
           case "int":
           case "double":
           case "bool":
+          case "int?":
+          case "double?":
+          case "bool?":
             return typeConfig[field.name].toString();
+          case "List<String>":
+            return '[' + typeConfig[field.name].map((e) => '"' + e.replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"').join(',') + ']';
           default:
             return 'new ' + fieldType.fullName + '.fromString("' + typeConfig[field.name] + '")';
         }
