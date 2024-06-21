@@ -765,7 +765,12 @@ class TypeInfo {
       }
       for (var pluginMethod in afterPlugins.keys) {
         String pluginName = "${afterPlugins[pluginMethod]!.varName}";
-        lines.add((!isVoid ? 'ret = ' : '') + (pluginMethod.isAsynchronous ? 'await ' : '') + '${pluginName}.${pluginMethod.name}(${isVoid ? '' : 'ret'});');
+        //add params to after plugin, TODO: validate if names match original method params
+        List<String> params = pluginMethod.parameters.map((mp) => mp.name).toList();
+        if (!isVoid) {
+          params.first = 'ret';
+        }
+        lines.add((!isVoid ? 'ret = ' : '') + (pluginMethod.isAsynchronous ? 'await ' : '') + '${pluginName}.${pluginMethod.name}(${params.join(',')});');
       }
       if (!isVoid && (beforePlugins.length + afterPlugins.length > 0)) {
         lines.add('return ret;');
