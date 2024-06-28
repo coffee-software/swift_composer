@@ -1,3 +1,11 @@
+ConfigInjectTypes:
+  injectInt: 2
+  injectString: 'TEST'
+  injectListString:
+    - 'list1'
+    - 'list2'
+  injectEnum: 2
+  injectFromString: 'TESTX'
 VirtualTypeX:
   extends: m1.SimpleGeneric<m1.Foo>
   stringField: FooStringField2

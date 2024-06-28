@@ -29,6 +29,12 @@ void main() {
 
     test('config', () {
       expect(config_test.$om.toString(), isNotNull);
+
+      expect(config_test.$om.configInjectTypes.injectInt, equals(2));
+      expect(config_test.$om.configInjectTypes.injectString, equals('TEST'));
+      expect(config_test.$om.configInjectTypes.injectListString, equals(['list1', 'list2']));
+      expect(config_test.$om.configInjectTypes.injectEnum, equals(config_test.TestEnum.value3));
+      expect(config_test.$om.configInjectTypes.injectFromString.value, equals('TESTX'));
     });
 
     test('subtypes', () {

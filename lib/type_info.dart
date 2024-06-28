@@ -240,6 +240,11 @@ class TypeInfo {
           case "List<String>":
             return '[' + typeConfig[field.name].map((e) => '"' + e.replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"').join(',') + ']';
           default:
+            //TODO: check why fieldType.type.isDartCoreEnum does not return true for enums here
+            //element is null for such types so this is a workaround
+            if (fieldType.element == null /*fieldType.type.isDartCoreEnum*/) {
+              return '${fieldType.uniqueName}.values.length > ${typeConfig[field.name].toString()} ? ${fieldType.uniqueName}.values[${typeConfig[field.name].toString()}] : ${fieldType.uniqueName}.values[0]';
+            }
             return 'new ' + fieldType.fullName + '.fromString("' + typeConfig[field.name] + '")';
         }
       case '@InjectInstances':
