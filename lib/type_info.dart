@@ -357,9 +357,10 @@ class TypeInfo {
     return ret ?? false;
   }
 
-  List<FieldElement> allFields() {
+  List<FieldElement> allFields({bool parentFirst = false}) {
     List<FieldElement> allFields = [];
-    for (var element in allClassElementsPath()) {
+
+    for (var element in (parentFirst ? allClassElementsPath().toList().reversed : allClassElementsPath())) {
       for (var m in element.mixins) {
         for (var f in m.element.fields) {
           if (!f.name.startsWith('_'))
@@ -710,7 +711,8 @@ class TypeInfo {
               lines.add('//dbg: ' + methodElement.name);
             }
 
-            for (var field in allFields()) {
+            //iterated trough fields with parent first to generate parent bits first and then subclasses bits.
+            for (var field in allFields(parentFirst: true)) {
               var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis');
               if (compiledPart != null && !calledParts.contains(compiledPart)) {
                 lines.add(compiledPart.getCallExpression('this'));
