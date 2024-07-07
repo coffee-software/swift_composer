@@ -326,23 +326,28 @@ class CompiledOmGenerator implements TemplateLoader {
     ));
   }
 
+  Future<void> _loadModuleConfig(ImportedModule module) async {
+    String path = module.filePath.replaceFirst('.dart', '.di.yaml', module.filePath.length - 5);
+    File configFile = new File(path);
+    if (configFile.existsSync()) {
+      output.writeLn(
+          '// config file for ' + (module.prefix ?? 'root') + ': ' + relative(path));
+      var yaml = loadYaml(await configFile.readAsString());
+      if (yaml is YamlMap) {
+        config.append(yaml.value, module.prefix);
+      }
+    } else {
+      output.writeLn(
+          '// no config file for ' + (module.prefix ?? 'root') + ': ' + relative(path));
+    }
+  }
   /**
    *
    */
   Future<void> _loadConfig() async {
     for (var module in modules) {
-      String path = module.filePath.replaceFirst('.dart', '.di.yaml', module.filePath.length - 5);
-      File configFile = new File(path);
-      if (configFile.existsSync()) {
-        output.writeLn(
-            '// config file for ' + (module.prefix ?? 'root') + ': ' + relative(path));
-        var yaml = loadYaml(await configFile.readAsString());
-        if (yaml is YamlMap) {
-          config.append(yaml.value, module.prefix);
-        }
-      } else {
-        output.writeLn(
-            '// no config file for ' + (module.prefix ?? 'root') + ': ' + relative(path));
+      if (module.prefix != null) {
+        await _loadModuleConfig(module);
       }
     }
     var configDir = new Directory('config');
@@ -363,6 +368,12 @@ class CompiledOmGenerator implements TemplateLoader {
 
       }
     }
+    for (var module in modules) {
+      if (module.prefix == null) {
+        await _loadModuleConfig(module);
+      }
+    }
+
   }
 
   /**

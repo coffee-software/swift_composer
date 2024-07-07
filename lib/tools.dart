@@ -14,7 +14,8 @@ class DiConfig {
       if (first.containsKey(prefixedKey) && first[prefixedKey] is Map) {
         _mergeMaps(first[prefixedKey] as Map, other[key], null);
       } else {
-        first[prefixedKey] = other[key];
+        //make sure maps are modifiable.
+        first[prefixedKey] = other[key] is Map ? Map.from(other[key]) : other[key];
       }
     }
   }
