@@ -241,11 +241,16 @@ class TypeInfo {
             return '[' + typeConfig[field.name].map((e) => '"' + e.replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"').join(',') + ']';
           default:
             //TODO: check why fieldType.type.isDartCoreEnum does not return true for enums here
+            var value = typeConfig[field.name];
             //element is null for such types so this is a workaround
             if (fieldType.element == null /*fieldType.type.isDartCoreEnum*/) {
-              return '${fieldType.uniqueName}.values.length > ${typeConfig[field.name].toString()} ? ${fieldType.uniqueName}.values[${typeConfig[field.name].toString()}] : ${fieldType.uniqueName}.values[0]';
+              if (value is int) {
+                return '${fieldType.uniqueName}.values.length > ${value.toString()} ? ${fieldType.uniqueName}.values[${value.toString()}] : ${fieldType.uniqueName}.values[0]';
+              } else {
+                return '${fieldType.uniqueName}.${value}';
+              }
             }
-            return 'new ' + fieldType.fullName + '.fromString("' + typeConfig[field.name] + '")';
+            return 'new ' + fieldType.fullName + '.fromString("' + value + '")';
         }
       case '@InjectInstances':
         TypeInfo type = fieldType.typeArguments[1];
