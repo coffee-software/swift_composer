@@ -366,15 +366,15 @@ class TypeInfo {
     List<FieldElement> allFields = [];
 
     for (var element in (parentFirst ? allClassElementsPath().toList().reversed : allClassElementsPath())) {
+      for (var f in element.fields) {
+        if (!f.name.startsWith('_'))
+          allFields.add(f);
+      }
       for (var m in element.mixins) {
         for (var f in m.element.fields) {
           if (!f.name.startsWith('_'))
             allFields.add(f);
         }
-      }
-      for (var f in element.fields) {
-        if (!f.name.startsWith('_'))
-          allFields.add(f);
       }
     }
     return allFields;
