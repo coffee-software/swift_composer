@@ -52,6 +52,19 @@ abstract class MixinUser2 extends MixinUser1 with TestMixin2 {
 
 }
 
+@ComposeSubtypes
+mixin TestMixin3 {
+
+
+  //override field test
+  String get override_mixin1Field => 'overriden';
+
+}
+
+@Compose
+abstract class MixinUser3 extends MixinUser1 with TestMixin2, TestMixin3 {
+}
+
 @Compose
 abstract class Container {
 

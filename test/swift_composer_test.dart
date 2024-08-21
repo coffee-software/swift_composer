@@ -206,9 +206,12 @@ void main() {
       expect(test['mixin1Field'], equals("mixin1FieldValue"));
       expect(test['mixin2Field'], equals("mixin2FieldValue"));
 
-      expect(mixins_test.$om.container.instancesOfMixinUser1.keys, equals(['MixinUser1', 'MixinUser2']));
-      expect(mixins_test.$om.container.instancesOfTestMixin1.keys, equals(['MixinUser1', 'MixinUser2']));
-      expect(mixins_test.$om.container.instancesOfTestMixin2.keys, equals(['MixinUser2']));
+      expect(mixins_test.$om.container.instancesOfMixinUser1.keys, equals(['MixinUser1', 'MixinUser2', 'MixinUser3']));
+      expect(mixins_test.$om.container.instancesOfTestMixin1.keys, equals(['MixinUser1', 'MixinUser2', 'MixinUser3']));
+      expect(mixins_test.$om.container.instancesOfTestMixin2.keys, equals(['MixinUser2', 'MixinUser3']));
+      Map<String, String> test2 = {};
+      mixins_test.$om.mixinUser3.fieldsToJson(test2);
+      expect(test2['mixin1Field'], equals('overriden'));
     });
 
 }

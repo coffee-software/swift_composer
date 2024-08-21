@@ -380,6 +380,28 @@ class TypeInfo {
     return allFields;
   }
 
+  List<PropertyAccessorElement> allAccessors() {
+    List<PropertyAccessorElement> allAccessors = [];
+    List<String> overrides = [];
+    for (var element in allClassElementsPath()) {
+      for (var method in element.accessors) {
+        if (!overrides.contains(method.name)) {
+          allAccessors.add(method);
+          overrides.add(method.name);
+        }
+      }
+      for (var mixin in element.mixins) {
+        for (var method in mixin.accessors) {
+          if (!overrides.contains(method.name)) {
+            allAccessors.add(method);
+            overrides.add(method.name);
+          }
+        }
+      }
+    }
+    return allAccessors;
+  }
+
   List<MethodElement> allMethods() {
     List<MethodElement> allMethods = [];
     List<String> overrides = [];
@@ -648,7 +670,13 @@ class TypeInfo {
         output.writeLn("}");
       }
     }
-
+    for (var accessorElement in allAccessors()) {
+      if (accessorElement.isGetter && accessorElement.name.startsWith('override_')) {
+        String originalAccessorName = accessorElement.name.replaceFirst('override_', '');
+        output.writeLn('@override');
+        output.writeLn('${accessorElement.returnType} get ${originalAccessorName} => override_${originalAccessorName};');
+      }
+    }
     //generted template methods
     for (var fieldElement in allFields()) {
       for (var metadataElement in fieldElement.getter?.metadata ?? []) {
