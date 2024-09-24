@@ -963,8 +963,9 @@ class CompiledFieldMethodPart {
                     }
                     break;
                   case 'String':
+                    //todo toDartVariable?
                     methodParameterValue =
-                        '"' + annotationField.toStringValue()! + '"';
+                        '"' + annotationField.toStringValue()!.replaceAll('\$', '\\\$').replaceAll('\"', '\\\"') + '"';
                     break;
                   case 'int':
                     methodParameterValue =
