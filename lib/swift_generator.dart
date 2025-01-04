@@ -252,7 +252,7 @@ class CompiledOmGenerator implements TemplateLoader {
         }
       }
       //output.writeLn('}');
-      output.writeLn('throw new Exception(\'no type for \' + className);');
+      output.writeLn('throw new UnknownTypeException(className);');
       output.writeLn('}');
     });
     typeMap.subtypesOf.values.forEach((typeInfo) {

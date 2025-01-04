@@ -32,6 +32,11 @@ abstract class SubtypesOf<T> {
   //T getInstance<X extends T>();
 }
 
+class UnknownTypeException implements Exception {
+  final String typeCode;
+  const UnknownTypeException(this.typeCode);
+  String toString() => 'no type for $typeCode';
+}
 
 const Compile = true;
 const CompilePart = true;
