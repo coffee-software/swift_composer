@@ -60,6 +60,8 @@ abstract class Pluggable {
 
 @ComposeSubtypes
 abstract class TypePlugin<T> {
+
+  @deprecated
   @Require
   late T parent;
 
@@ -67,6 +69,6 @@ abstract class TypePlugin<T> {
   T get decorated => parent;
 
   ST sibling<ST>() {
-    return (parent as Pluggable).plugin<ST>();
+    return (decorated as Pluggable).plugin<ST>();
   }
 }
