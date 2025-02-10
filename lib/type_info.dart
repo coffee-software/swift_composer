@@ -1,5 +1,7 @@
 library swift_composer;
 
+import 'dart:convert';
+
 import 'package:analyzer/dart/analysis/session.dart';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
@@ -8,6 +10,7 @@ import 'package:analyzer/dart/element/type_system.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/analysis/results.dart';
 import 'package:build/build.dart';
+import 'package:yaml/yaml.dart';
 
 import 'tools.dart';
 
@@ -239,6 +242,10 @@ class TypeInfo {
             return typeConfig[field.name].toString();
           case "List<String>":
             return '[' + typeConfig[field.name].map((e) => '"' + e.replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"').join(',') + ']';
+          case "Map<dynamic,dynamic>?":
+            return jsonEncode(typeConfig[field.name]);
+          case "Map<dynamic,dynamic>":
+            return jsonEncode(typeConfig[field.name]);
           default:
             //TODO: check why fieldType.type.isDartCoreEnum does not return true for enums here
             var value = typeConfig[field.name];
@@ -250,7 +257,11 @@ class TypeInfo {
                 return '${fieldType.uniqueName}.${value}';
               }
             }
-            return 'new ' + fieldType.fullName + '.fromString("' + value + '")';
+            if (value is String) {
+              return 'new ' + fieldType.fullName + '.fromString("' + value + '")';
+            } else {
+              return null;
+            }
         }
       case '@InjectInstances':
         TypeInfo type = fieldType.typeArguments[1];
