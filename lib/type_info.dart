@@ -424,6 +424,14 @@ class TypeInfo {
           overrides.add(method.name);
         }
       }
+      for (var mixin in element.mixins) {
+        for (var method in mixin.methods) {
+          if (!overrides.contains(method.name)) {
+            allMethods.add(method);
+            overrides.add(method.name);
+          }
+        }
+      }
     }
     return allMethods;
   }

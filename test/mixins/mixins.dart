@@ -1,4 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
+import '../lib/foo.dart' as module_test;
 
 part 'mixins.c.dart';
 
@@ -18,6 +19,8 @@ mixin TestMixin2 {
   @FieldAnnotation
   String mixin2Field = '';
 
+  @Factory
+  module_test.Foo createFoo();
 }
 
 @Compose

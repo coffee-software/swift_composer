@@ -212,6 +212,8 @@ void main() {
       Map<String, String> test2 = {};
       mixins_test.$om.mixinUser3.fieldsToJson(test2);
       expect(test2['mixin1Field'], equals('overriden'));
+      //generate factories from mixins
+      expect(mixins_test.$om.container.instancesOfTestMixin2['MixinUser3']!.createFoo(), isNotNull);
     });
 
 }
