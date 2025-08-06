@@ -1206,8 +1206,10 @@ class TypeMap {
     allTypes.forEach((name, ce){
       if (ce.element != null) {
         ce.element!.allSupertypes.forEach((st){
-          if (st.getDisplayString(withNullability: false).startsWith('TypePlugin<') && st.typeArguments.length == 1 && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
-            plugins.add(ce);
+          if (st.getDisplayString(withNullability: false).startsWith('TypePlugin<') && st.typeArguments.length == 1) {
+            if (!(st.typeArguments[0] is InvalidType) && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
+              plugins.add(ce);
+            }
           }
         });
       }
