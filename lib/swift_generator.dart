@@ -452,7 +452,20 @@ class CompiledOmGenerator implements TemplateLoader {
           });
           //importedLibrariesMap[importElement!.importedLibrary!] = importElement.prefix == null ? null : importElement.prefix!.name;
           //output.writeLn('// import ' + (importElement.importedLibrary?.identifier ?? 'null') + (importElement.prefix == null ? '' : ' as ' + importElement.prefix!.name));
-          importElement.namespace.definedNames.forEach(typeMap.registerClassElement);
+
+          importElement.namespace.definedNames.forEach((name, element){
+            for (var metadataElement in element.metadata) {
+              var annotation = metadataElement.toSource();
+              if (annotation.startsWith('@ComposeIfModule(')) {
+                var requireModule = annotation.substring(18, annotation.length - 2);
+                if (modules.where((module) => module.name == requireModule).isEmpty) {
+                  output.writeLn('//type: ' + element.getDisplayString() + ' requires module: ' + requireModule + ' but it is not imported. skipping');
+                  return;
+                }
+              }
+            }
+            typeMap.registerClassElement(name, element);
+          });
         }
       }
       library.allElements.forEach((element) => (element.name != null) ? typeMap.registerClassElement(element.name!, element) : null);

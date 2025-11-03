@@ -3,6 +3,12 @@ library swift_composer;
 const Compose = true;
 const ComposeSubtypes = true;
 
+//if module does not require other, but add optional subtypes or plugins, use this annotation
+class ComposeIfModule {
+  final String moduleCode;
+  const ComposeIfModule(this.moduleCode);
+}
+
 const Create = true;
 const Require = true;
 const Inject = true;
