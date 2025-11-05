@@ -459,7 +459,7 @@ class CompiledOmGenerator implements TemplateLoader {
               if (annotation.startsWith('@ComposeIfModule(')) {
                 var requireModule = annotation.substring(18, annotation.length - 2);
                 if (modules.where((module) => module.name == requireModule).isEmpty) {
-                  output.writeLn('//type: ' + element.getDisplayString() + ' requires module: ' + requireModule + ' but it is not imported. skipping');
+                  output.writeLn('//type: ' + element.getDisplayString(withNullability: false) + ' requires module: ' + requireModule + ' but it is not imported. skipping');
                   return;
                 }
               }
