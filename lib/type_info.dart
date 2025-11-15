@@ -950,7 +950,7 @@ class CompiledFieldMethodPart {
         } else if (fieldParameter.type.isDartCoreEnum && methodParameter.name == 'values') {
           methodParameterValue = '${compiledFieldType.uniqueName}.values';
         } else if (methodParameter.isOptional) {
-          methodParameterValue = methodParameter.defaultValueCode!;
+          methodParameterValue = methodParameter.defaultValueCode ?? 'null';
           var nameParts = methodParameter.name.split('_');
           String annotationName = '@' + nameParts[0][0].toUpperCase() + nameParts[0].substring(1);
           if (nameParts.length == 1) {
