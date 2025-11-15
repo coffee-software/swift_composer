@@ -773,7 +773,7 @@ class TypeInfo {
             }
             for (var plugin in plugins) {
               for (var field in plugin.allFields()) {
-                var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis.parent');
+                var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis.decorated');
                 if (compiledPart != null && !calledParts.contains(compiledPart)) {
                   lines.add(compiledPart.getCallExpression('this.${plugin.varName}'));
                   calledParts.add(compiledPart);

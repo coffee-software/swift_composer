@@ -6,7 +6,7 @@ import 'module_fruits.dart';
 abstract class PricePlugin extends TypePlugin<Fruit> {
 
   @JsonEncode
-  double get price => parent.weight * parent.width * parent.height * parent.length;
+  double get price => decorated.weight * decorated.width * decorated.height * decorated.length;
 
   @MethodPlugin
   List<dynamic> beforeGetFullName(String arg1, String arg2)

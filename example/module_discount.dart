@@ -5,7 +5,7 @@ import 'module_price.dart';
 @Compose
 abstract class DiscountPlugin extends TypePlugin<Fruit> {
 
-  double get discountedPrice => parent.plugin<PricePlugin>().price * 0.5;
+  double get discountedPrice => decorated.plugin<PricePlugin>().price * 0.5;
 
   @MethodPlugin
   String afterGetFullName(String ret)
