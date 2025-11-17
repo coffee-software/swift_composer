@@ -88,9 +88,12 @@ class TypeInfo {
       return typeMap.classNames[type.element]!;
     } else {
       //TODO: validate if core?
-      var name = type.getDisplayString(withNullability: false);
+      var name = type.getDisplayString();
       if (name.contains('<')) {
         return name.substring(0, name.indexOf('<'));
+      }
+      if (name.contains('?')) {
+        return name.substring(0, name.indexOf('?'));
       }
       return name;
     }
@@ -809,7 +812,7 @@ class TypeInfo {
           i++;
         }
       }
-      bool isVoid = (methodElement.returnType is VoidType) || (methodElement.returnType.getDisplayString(withNullability: false) == 'Future<void>');
+      bool isVoid = (methodElement.returnType is VoidType) || (methodElement.returnType.getDisplayString() == 'Future<void>');
       if (beforePlugins.length + afterPlugins.length > 0) {
         lines.add('${!isVoid ? 'var ret = ' : ''}${methodElement.firstFragment.isAsynchronous ? 'await ' : ''}super.${methodElement.name}($paramsStr);');
       }
@@ -998,7 +1001,7 @@ class CompiledFieldMethodPart {
       //TODO
       part = part.replaceAll('this', thisReplace);
 
-      String paramClass = fieldParameter.element.type.getDisplayString(withNullability: false);
+      String paramClass = fieldParameter.element.type.getDisplayString();
       String fieldClass = compiledFieldType.uniqueName;
       part = part.replaceAll(
           'as $paramClass',
@@ -1194,7 +1197,7 @@ class TypeMap {
     allTypes.forEach((name, ce){
       if (ce.element != null) {
         for (var st in ce.element!.allSupertypes) {
-          if (st.getDisplayString(withNullability: false).startsWith('TypePlugin<') && st.typeArguments.length == 1) {
+          if (st.getDisplayString().startsWith('TypePlugin<') && st.typeArguments.length == 1) {
             if (st.typeArguments[0] is! InvalidType && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
               plugins.add(ce);
             }
