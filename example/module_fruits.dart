@@ -37,10 +37,10 @@ abstract class Fruit implements Pluggable {
   }
 
   Map toJson() {
-      Map ret = new Map();
+      Map ret = {};
       ret['className'] = className;
       ret['fullName'] = getFullName("this fruit is called '", "'");
-      this.fieldsToJson(ret);
+      fieldsToJson(ret);
       return ret;
   }
 

@@ -1,4 +1,4 @@
-library swift_composer;
+library;
 
 const Compose = true;
 const ComposeSubtypes = true;
@@ -41,6 +41,7 @@ abstract class SubtypesOf<T> {
 class UnknownTypeException implements Exception {
   final String typeCode;
   const UnknownTypeException(this.typeCode);
+  @override
   String toString() => 'no type for $typeCode';
 }
 

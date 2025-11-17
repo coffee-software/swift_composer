@@ -1,4 +1,4 @@
-library swift_composer;
+library;
 
 import 'dart:convert';
 
@@ -40,7 +40,7 @@ class GenerationTimer {
 
   void start(String name) {
     path.add(name);
-    starts.add(new DateTime.now());
+    starts.add(DateTime.now());
 
   }
 
@@ -48,7 +48,7 @@ class GenerationTimer {
     String p = path.join('.');
     path.removeLast();
     var start = starts.removeLast();
-    int ms = (new DateTime.now()).millisecondsSinceEpoch - start.millisecondsSinceEpoch;
+    int ms = (DateTime.now()).millisecondsSinceEpoch - start.millisecondsSinceEpoch;
 
     if (times.containsKey(p)) {
       times[p] = times[p]! + ms;
@@ -61,7 +61,7 @@ class GenerationTimer {
     if (detailed) {
       output.writeLn('// generation times');
       for (var t in times.keys) {
-        output.writeLn('// ${t} = ${times[t]}ms\n');
+        output.writeLn('// $t = ${times[t]}ms\n');
       }
     } else {
       output.writeLn("// generated in ${times['composer']}ms");
@@ -82,27 +82,28 @@ class CompiledOmGenerator implements TemplateLoader {
   List<ImportedModule> modules = [];
 
   CompiledOmGenerator(this.output, this.library, this.step, this.config, this.timer, this.debug) :
-        typeMap = new TypeMap(output, library.element.typeSystem, step, config);
+        typeMap = TypeMap(output, library.element.typeSystem, step, config);
 
   TemplateLocation? openTemplate(String name) {
     for (var module in modules.reversed) {
       String searchName = name;
-      if (searchName.startsWith(module.name + '_')) {
-        searchName = searchName.replaceFirst(module.name + '_', '');
+      if (searchName.startsWith('${module.name}_')) {
+        searchName = searchName.replaceFirst('${module.name}_', '');
       }
       if (searchName.endsWith('.scss') && module.name == 'application') {
         //prevent scss parts from being build
-        searchName = '_' + searchName;
+        searchName = '_$searchName';
       }
-      String filePath = module.packagePath + '/lib/widgets/' + searchName;
-      File file = new File(filePath);
+      String filePath = '${module.packagePath}/lib/widgets/$searchName';
+      File file = File(filePath);
       if (file.existsSync()) {
-        return TemplateLocation(module, '/lib/widgets/' + searchName, file);
+        return TemplateLocation(module, '/lib/widgets/$searchName', file);
       }
     }
     return null;
   }
 
+  @override
   String? load(String name) {
     TemplateLocation? file = openTemplate(name);
     if (file != null) {
@@ -113,15 +114,15 @@ class CompiledOmGenerator implements TemplateLoader {
 
   Map<String, String> getAnnotations(ClassElement element) {
     Map<String, String> ret = {};
-    element.metadata.annotations.forEach((annotation) {
+    for (var annotation in element.metadata.annotations) {
       String source = annotation.toSource();
       source = source.replaceFirst('@', '');
       if (['Compose', 'ComposeSubtypes'].contains(source)) {
         //todo better list of build in annotations
-        return;
+        continue;
       }
       String key = source;
-      if (source.indexOf('(') > -1) {
+      if (source.contains('(')) {
         key = source.substring(0, source.indexOf('('));
       }
       if (!ret.containsKey(key)) {
@@ -134,15 +135,15 @@ class CompiledOmGenerator implements TemplateLoader {
         }
         ret[key] = value;
       }
-    });
+    }
     return ret;
   }
 
   void generateSubtypesOf() {
-    typeMap.subtypesOf.values.forEach((typeInfo) {
+    for (var typeInfo in typeMap.subtypesOf.values) {
 
-      output.writeLn('class \$SubtypesOf' + typeInfo.flatName + ' extends SubtypesOf<' + typeInfo.uniqueName + '> {');
-      output.writeLn('String getCode<X extends ' + typeInfo.uniqueName + '>(){');
+      output.writeLn('class \$SubtypesOf${typeInfo.flatName} extends SubtypesOf<${typeInfo.uniqueName}> {');
+      output.writeLn('String getCode<X extends ${typeInfo.uniqueName}>(){');
       for (var type in typeMap.getNonAbstractSubtypes(typeInfo)) {
         output.writeLn('if (X == ${type.fullName}) return ${type.classCodeAsReference};');
       }
@@ -161,18 +162,18 @@ class CompiledOmGenerator implements TemplateLoader {
           }
           baseClassCode = parentType.classCodeAsReference;
         }
-        output.writeLn('${baseClassCode},{');
+        output.writeLn('$baseClassCode,{');
         //save annotations
         var myAnnotations = getAnnotations(type.element!);
         myAnnotations.forEach((key, value) {
-          output.writeLn('\"$key\" : $value,');
+          output.writeLn('"$key" : $value,');
         });
         output.writeLn('}, {');
         //save inherited annotations
         for (var parentElement in type.parentClassElementsPath()){
           getAnnotations(parentElement).forEach((key, value) {
             if (!myAnnotations.containsKey(key)) {
-              output.writeLn('\"$key\" : $value,');
+              output.writeLn('"$key" : $value,');
             }
           });
         }
@@ -181,7 +182,7 @@ class CompiledOmGenerator implements TemplateLoader {
       }
       output.writeLn('};');
       output.writeLn('}');
-    });
+    }
   }
 
   void generateCompiledMethodsParts() {
@@ -207,24 +208,24 @@ class CompiledOmGenerator implements TemplateLoader {
       if (type.canBeSingleton()) {
 
         String getterName = type.varName;
-        output.writeLn('${type.creatorName}? _${getterName};');
-        output.writeLn('${type.creatorName} get ${getterName} {');
-        output.writeLn('if(_${getterName} == null){');
-        output.writeLn('_${getterName} = ' + type.generateCreator() + ';');
+        output.writeLn('${type.creatorName}? _$getterName;');
+        output.writeLn('${type.creatorName} get $getterName {');
+        output.writeLn('if(_$getterName == null){');
+        output.writeLn('_$getterName = ${type.generateCreator()};');
         output.writeLn('}');
-        output.writeLn('return _${getterName} as ${type.creatorName};');
+        output.writeLn('return _$getterName as ${type.creatorName};');
         output.writeLn('}');
       }
     }
 
-    typeMap.subtypeInstanes.values.forEach((typeInfo){
+    for (var typeInfo in typeMap.subtypeInstanes.values) {
       output.writeLn('Map<String, ${typeInfo.uniqueName}>? _instancesOf${typeInfo.flatName};');
       output.writeLn('Map<String, ${typeInfo.uniqueName}> get instancesOf${typeInfo.flatName} {');
       output.writeLn('if (_instancesOf${typeInfo.flatName} != null) return _instancesOf${typeInfo.flatName}!;');
       output.writeLn('return _instancesOf${typeInfo.flatName} = {');
 
       typeMap.getNonAbstractSubtypes(typeInfo).forEach((subtypeInfo){
-        if (subtypeInfo.allRequiredFields().length == 0) {
+        if (subtypeInfo.allRequiredFields().isEmpty) {
           output.writeLn('${subtypeInfo.classCodeAsReference}: ');
           output.writeLn(subtypeInfo.varName);
           //output.writeMany(subtypeInfo.generateCreator());
@@ -235,10 +236,10 @@ class CompiledOmGenerator implements TemplateLoader {
       });
       output.writeLn('};');
       output.writeLn('}');
-    });
+    }
 
     typeMap.subtypeFactories.forEach((key, subtypeFactoryInfo) {
-      output.writeLn('${subtypeFactoryInfo.returnType.uniqueName} ${key} {');
+      output.writeLn('${subtypeFactoryInfo.returnType.uniqueName} $key {');
 
       //output.writeLn('switch(className){');
       for (var type in typeMap.getNonAbstractSubtypes(subtypeFactoryInfo.returnType)) {
@@ -246,7 +247,7 @@ class CompiledOmGenerator implements TemplateLoader {
         //type.allRequiredFields().map((f) => f.name).join(',');
         if (type.allRequiredFields().length == subtypeFactoryInfo.arguments.length - 1) {
           output.writeLn('if (className == ${type.classCodeAsReference})');
-          output.writeLn('return ' + type.generateCreator() + ';');
+          output.writeLn('return ${type.generateCreator()};');
           //output.writeLn('case ${type.classCodeAsReference}:');
           //output.writeLn('return ' + type.generateCreator() + ';');
         }
@@ -255,9 +256,9 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeLn('throw new UnknownTypeException(className);');
       output.writeLn('}');
     });
-    typeMap.subtypesOf.values.forEach((typeInfo) {
-      output.writeLn('SubtypesOf<${typeInfo.uniqueName}> subtypesOf${typeInfo.flatName} = new \$SubtypesOf' + typeInfo.flatName + '();');
-    });
+    for (var typeInfo in typeMap.subtypesOf.values) {
+      output.writeLn('SubtypesOf<${typeInfo.uniqueName}> subtypesOf${typeInfo.flatName} = new \$SubtypesOf${typeInfo.flatName}();');
+    }
 
     output.writeLn('final List<String> s = const [');
     output.writeLn(typeMap.allSymbols.map((e) => '"$e"').join(','));
@@ -266,13 +267,11 @@ class CompiledOmGenerator implements TemplateLoader {
     output.writeLn('\$ObjectManager \$om = new \$ObjectManager();');
   }
 
-  /**
-   *
-   */
+  ///
   Future<void> _loadLibraryFiles() async {
-    var packagesMap = new Map<String, String>();
+    var packagesMap = <String, String>{};
 
-    File packagesFile = new File(Directory.current.path + '/.dart_tool/package_config.json');
+    File packagesFile = File('${Directory.current.path}/.dart_tool/package_config.json');
     var packagesInfo = jsonDecode(packagesFile.readAsStringSync());
     for (var i = 0; i < packagesInfo['packages'].length; i++) {
       String name = packagesInfo['packages'][i]['name'];
@@ -281,85 +280,83 @@ class CompiledOmGenerator implements TemplateLoader {
         root = root.replaceFirst('file://', '');
       }
       if (!root.startsWith('/')) {
-        root = Directory.current.path + '/.dart_tool/' + root;
+        root = '${Directory.current.path}/.dart_tool/$root';
       }
       packagesMap[name] = root;
     }
 
-    library.element.firstFragment.libraryImports.forEach((import) {
+    for (var import in library.element.firstFragment.libraryImports) {
 
-      if (!(import.uri is DirectiveUriWithRelativeUriString)) {
-        return;
+      if (import.uri is! DirectiveUriWithRelativeUriString) {
+        continue;
       }
       String stringUri = (import.uri as DirectiveUriWithRelativeUriString).relativeUriString;
 
-      if (stringUri.indexOf(':') > -1) {
+      if (stringUri.contains(':')) {
         String schema = stringUri.substring(0, stringUri.indexOf(':'));
         if (schema != 'package') {
-          return;
+          continue;
         }
         String package = stringUri.substring(
             stringUri.indexOf(':') + 1, stringUri.indexOf('/'));
         if (packagesMap.containsKey(package)) {
           String file = stringUri.substring(stringUri.indexOf('/') + 1);
-          modules.add(new ImportedModule(
+          modules.add(ImportedModule(
               package,
-              packagesMap[package]! + '/lib/' + file,
+              '${packagesMap[package]!}/lib/$file',
               packagesMap[package]!,
               prefix: import.prefix?.element.name
           ));
         }
       } else {
 
-        modules.add(new ImportedModule(
+        modules.add(ImportedModule(
             'application',
-            dirname(Directory.current.path + '/' + step.inputId.path) + '/' + stringUri,
-            Directory.current.path + '/',
+            '${dirname('${Directory.current.path}/${step.inputId.path}')}/$stringUri',
+            '${Directory.current.path}/',
             prefix: import.prefix?.element.name
         ));
       }
-    });
-    modules.add(new ImportedModule(
+    }
+    modules.add(ImportedModule(
         'application',
-        Directory.current.path + '/' + step.inputId.path,
-        Directory.current.path + '/'
+        '${Directory.current.path}/${step.inputId.path}',
+        '${Directory.current.path}/'
     ));
   }
 
   Future<void> _loadModuleConfig(ImportedModule module) async {
     String path = module.filePath.replaceFirst('.dart', '.di.yaml', module.filePath.length - 5);
-    File configFile = new File(path);
+    File configFile = File(path);
     if (configFile.existsSync()) {
       output.writeLn(
-          '// config file for ' + (module.prefix ?? 'root') + ': ' + relative(path));
+          '// config file for ${module.prefix ?? 'root'}: ${relative(path)}');
       var yaml = loadYaml(await configFile.readAsString());
       if (yaml is YamlMap) {
         config.append(yaml.value, module.prefix);
       }
     } else {
       output.writeLn(
-          '// no config file for ' + (module.prefix ?? 'root') + ': ' + relative(path));
+          '// no config file for ${module.prefix ?? 'root'}: ${relative(path)}');
     }
   }
-  /**
-   *
-   */
+  ///
   Future<void> _loadConfig() async {
     for (var module in modules) {
       if (module.prefix != null) {
         await _loadModuleConfig(module);
       }
     }
-    var configDir = new Directory('config');
+    var configDir = Directory('config');
     if (configDir.existsSync()) {
-      for (var file in configDir.listSync(recursive: true).where((element) => element is File)) {
+      for (var file in configDir.listSync(recursive: true).whereType<File>()) {
         if (file.path.endsWith('.yaml')) {
           var name = file.path
               .split('/')
               .last;
           name = name.substring(0, name.length - 5);
-          String content = await File(file.path).readAsStringSync();
-          output.writeLn('// config file for ' + name + ' ' + file.path);
+          String content = File(file.path).readAsStringSync();
+          output.writeLn('// config file for $name ${file.path}');
           var yaml = loadYaml(content);
           if (yaml is YamlMap) {
             config.append(yaml.value, name == 'app' ? null : name);
@@ -376,19 +373,17 @@ class CompiledOmGenerator implements TemplateLoader {
 
   }
 
-  /**
-   *
-   */
+  ///
   Future<void> _buildWidgetsIndex() async {
 
-    String widgetsIndexPath = Directory.current.path + '/' + step.inputId.path;
+    String widgetsIndexPath = '${Directory.current.path}/${step.inputId.path}';
     String widgetsDirName = widgetsIndexPath.substring(0, widgetsIndexPath.lastIndexOf('/') + 1);
     String widgetsFileName = widgetsIndexPath.substring(widgetsIndexPath.lastIndexOf('/') + 1);
-    widgetsIndexPath = widgetsDirName + '_' + widgetsFileName.replaceFirst('.dart', '_widgets.scss');
-    File widgetsIndex = new File(widgetsIndexPath);
+    widgetsIndexPath = '${widgetsDirName}_${widgetsFileName.replaceFirst('.dart', '_widgets.scss')}';
+    File widgetsIndex = File(widgetsIndexPath);
     List<String> widgetsIndexContent = [];
     //unique set to generate Generic widgets once.
-    Set<String> widgetsSet = new Set<String>();
+    Set<String> widgetsSet = <String>{};
     if (widgetsIndex.existsSync()) {
       output.writeLn('// generating widgets index file at ${widgetsIndex.path}');
       widgetsIndexContent.add('// auto generated widgets index file. do not modify');
@@ -399,15 +394,15 @@ class CompiledOmGenerator implements TemplateLoader {
         }
       }
       for (var widgetName in widgetsSet) {
-        var templateFile = openTemplate(widgetName + '.scss');
+        var templateFile = openTemplate('$widgetName.scss');
         if (templateFile != null) {
           //output.writeLn('// file: ${templateFile.module.name} ${templateFile.path} ${templateFile.file.path}');
-          widgetsIndexContent.add('.${widgetName} {');
+          widgetsIndexContent.add('.$widgetName {');
           if (templateFile.module.name == 'application') {
-            String relPath = relative(Directory.current.path + '/' + templateFile.path, from:dirname(widgetsIndexPath));
-            widgetsIndexContent.add('    @import \"${relPath}\"');
+            String relPath = relative('${Directory.current.path}/${templateFile.path}', from:dirname(widgetsIndexPath));
+            widgetsIndexContent.add('    @import "$relPath"');
           } else {
-            widgetsIndexContent.add('    @import \"package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}\"');
+            widgetsIndexContent.add('    @import "package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}"');
           }
           widgetsIndexContent.add('}');
           var content = widgetsIndexContent.join("\n");
@@ -420,15 +415,13 @@ class CompiledOmGenerator implements TemplateLoader {
     }
   }
 
-  /**
-   *
-   */
+  ///
   Future<String> generate() async {
 
     timer.start('composer');
     try {
       output.writeSplit();
-      output.writeLn('// generated by swift_composer at ' + timer.starts.first.toString());
+      output.writeLn('// generated by swift_composer at ${timer.starts.first}');
       output.writeLn('// ignore common warnings in generated code, you can also exclude this file in analysis_options.yaml');
       output.writeLn('// ignore_for_file: unnecessary_non_null_assertion');
       output.writeLn('// ignore_for_file: dead_null_aware_expression');
@@ -439,8 +432,8 @@ class CompiledOmGenerator implements TemplateLoader {
       await _loadConfig();
       output.writeSplit();
       output.writeLn('// MERGED CONFIG');
-      this.config.config.forEach((key, value) {
-        output.writeLn("// ${key}: ${value}".replaceAll('\n', '\\n'));
+      config.config.forEach((key, value) {
+        output.writeLn("// $key: $value".replaceAll('\n', '\\n'));
       });
       output.writeSplit();
       timer.end();
@@ -450,7 +443,7 @@ class CompiledOmGenerator implements TemplateLoader {
 
           String prefix = importElement.prefix?.element.name ?? '';
           if (prefix.isNotEmpty) {
-            prefix = prefix + '.';
+            prefix = '$prefix.';
           }
           importElement.namespace.definedNames2.forEach((key, value) {
             //output.writeLn('//' + key + ' ' + value.displayName + ' ' + value.getExtendedDisplayName() + " ${value.hashCode}");
@@ -465,7 +458,7 @@ class CompiledOmGenerator implements TemplateLoader {
               if (annotation.startsWith('@ComposeIfModule(')) {
                 var requireModule = annotation.substring(18, annotation.length - 2);
                 if (modules.where((module) => module.name == requireModule).isEmpty) {
-                  output.writeLn('//type: ' + (element.name ?? 'NULL') + ' requires module: ' + requireModule + ' but it is not imported. skipping');
+                  output.writeLn('//type: ${element.name ?? 'NULL'} requires module: $requireModule but it is not imported. skipping');
                   return;
                 }
               }
@@ -474,11 +467,13 @@ class CompiledOmGenerator implements TemplateLoader {
           });
         }
       }
-      library.allElements.forEach((element) => (element.name != null) ? typeMap.registerClassElement(element.name!, element) : null);
+      for (var element in library.allElements) {
+        (element.name != null) ? typeMap.registerClassElement(element.name!, element) : null;
+      }
 
       //DEBUG INFO
 
-      new Map<String, TypeInfo>.from(typeMap.allTypes).forEach((key, value) {
+      Map<String, TypeInfo>.from(typeMap.allTypes).forEach((key, value) {
         value.preAnaliseAllUsedTypes();
       });
 
@@ -486,7 +481,7 @@ class CompiledOmGenerator implements TemplateLoader {
         output.writeLn('// ALL TYPES INFO');
         output.writeSplit();
         typeMap.allTypes.forEach((key, value) {
-          output.writeLn('// ' + key + ' => ' + value.debugInfo);
+          output.writeLn('// $key => ${value.debugInfo}');
         });
       }
 
@@ -529,7 +524,7 @@ class CompiledOmGenerator implements TemplateLoader {
       timer.end();
 
     } catch(e, stacktrace) {
-      output.writeLn('/* unhandled code generator exception: \n' + e.toString() + '\n' + stacktrace.toString() + '*/');
+      output.writeLn('/* unhandled code generator exception: \n$e\n$stacktrace*/');
     }
     timer.start('index');
     await _buildWidgetsIndex();
@@ -555,12 +550,12 @@ class SwiftGenerator extends Generator {
     var partName = fileName.replaceAll('.dart', '.c.dart');
     if (library.element.firstFragment.source.contents.data.contains("\npart '$partName';\n")) {
       return await (
-          new CompiledOmGenerator(
-              new OutputWriter(debug),
+          CompiledOmGenerator(
+              OutputWriter(debug),
               library,
               step,
-              new DiConfig(),
-              new GenerationTimer(),
+              DiConfig(),
+              GenerationTimer(),
               debug
           )
       ).generate();
@@ -571,5 +566,5 @@ class SwiftGenerator extends Generator {
 }
 
 PartBuilder swiftBuilder(BuilderOptions options) {
-  return new PartBuilder([new SwiftGenerator(options)], '.c.dart');
+  return PartBuilder([SwiftGenerator(options)], '.c.dart');
 }

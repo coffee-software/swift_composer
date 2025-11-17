@@ -10,6 +10,6 @@ abstract class DiscountPlugin extends TypePlugin<Fruit> {
   @MethodPlugin
   String afterGetFullName(String ret)
   {
-    return ret + " discounted to $discountedPrice";
+    return "$ret discounted to $discountedPrice";
   }
 }

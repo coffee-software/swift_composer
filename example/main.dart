@@ -20,7 +20,7 @@ void main() {
       ..weight = 100
   ]);
 
-  fruits.forEach((fruit){
+  for (var fruit in fruits) {
     print(fruit.toJson());
-  });
+  }
 }
