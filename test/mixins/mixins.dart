@@ -6,7 +6,7 @@ part 'mixins.c.dart';
 const FieldAnnotation = true;
 
 @ComposeSubtypes
-abstract class TestMixin1 {
+mixin TestMixin1 {
 
   @FieldAnnotation
   String mixin1Field = '';

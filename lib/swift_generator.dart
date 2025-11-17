@@ -113,7 +113,7 @@ class CompiledOmGenerator implements TemplateLoader {
 
   Map<String, String> getAnnotations(ClassElement element) {
     Map<String, String> ret = {};
-    element.metadata.forEach((annotation) {
+    element.metadata.annotations.forEach((annotation) {
       String source = annotation.toSource();
       source = source.replaceFirst('@', '');
       if (['Compose', 'ComposeSubtypes'].contains(source)) {
@@ -156,7 +156,7 @@ class CompiledOmGenerator implements TemplateLoader {
         //find base class name
         String baseClassCode = type.classCodeAsReference;
         for (var parentType in type.allTypeInfoPath()){
-          if (parentType.element!.metadata.where((element) => element.toSource() == '@ComposeSubtypes').isNotEmpty) {
+          if (parentType.element!.metadata.annotations.where((element) => element.toSource() == '@ComposeSubtypes').isNotEmpty) {
             break;
           }
           baseClassCode = parentType.classCodeAsReference;
@@ -286,7 +286,7 @@ class CompiledOmGenerator implements TemplateLoader {
       packagesMap[name] = root;
     }
 
-    library.element.libraryImports.forEach((import) {
+    library.element.firstFragment.libraryImports.forEach((import) {
 
       if (!(import.uri is DirectiveUriWithRelativeUriString)) {
         return;
@@ -445,26 +445,32 @@ class CompiledOmGenerator implements TemplateLoader {
       output.writeSplit();
       timer.end();
 
-      for (var importElement in library.element.libraryImports) {
+      for (var importElement in library.element.firstFragment.libraryImports) {
         if (!importElement.importedLibrary!.isDartCore) {
-          importElement.namespace.definedNames.forEach((key, value) {
-            //output.writeLn('//' + key + ' ' + value.displayName + ' ' + value.getExtendedDisplayName('test') + " ${value.hashCode}");
+
+          String prefix = importElement.prefix?.element.name ?? '';
+          if (prefix.isNotEmpty) {
+            prefix = prefix + '.';
+          }
+          importElement.namespace.definedNames2.forEach((key, value) {
+            //output.writeLn('//' + key + ' ' + value.displayName + ' ' + value.getExtendedDisplayName() + " ${value.hashCode}");
           });
           //importedLibrariesMap[importElement!.importedLibrary!] = importElement.prefix == null ? null : importElement.prefix!.name;
           //output.writeLn('// import ' + (importElement.importedLibrary?.identifier ?? 'null') + (importElement.prefix == null ? '' : ' as ' + importElement.prefix!.name));
 
-          importElement.namespace.definedNames.forEach((name, element){
-            for (var metadataElement in element.metadata) {
+          importElement.namespace.definedNames2.forEach((name, element){
+            for (var metadataElement in element.metadata.annotations) {
+              // TODO: if ComposeIfModule is checked here, Compose can also be checked here so non composed classes wont be registered?
               var annotation = metadataElement.toSource();
               if (annotation.startsWith('@ComposeIfModule(')) {
                 var requireModule = annotation.substring(18, annotation.length - 2);
                 if (modules.where((module) => module.name == requireModule).isEmpty) {
-                  output.writeLn('//type: ' + element.getDisplayString(withNullability: false) + ' requires module: ' + requireModule + ' but it is not imported. skipping');
+                  output.writeLn('//type: ' + (element.name ?? 'NULL') + ' requires module: ' + requireModule + ' but it is not imported. skipping');
                   return;
                 }
               }
             }
-            typeMap.registerClassElement(name, element);
+            typeMap.registerClassElement(prefix + name, element);
           });
         }
       }
@@ -544,7 +550,10 @@ class SwiftGenerator extends Generator {
   @override
   FutureOr<String?> generate(LibraryReader library, BuildStep step) async {
     bool debug = options.config.containsKey('debug') ? options.config['debug'] : false;
-    if (library.element.parts.isNotEmpty) {
+    //parts are not available at build time trough .fragments so we check manually for part declaration:
+    var fileName = library.element.firstFragment.source.fullName.split('/').last;
+    var partName = fileName.replaceAll('.dart', '.c.dart');
+    if (library.element.firstFragment.source.contents.data.contains("\npart '$partName';\n")) {
       return await (
           new CompiledOmGenerator(
               new OutputWriter(debug),
