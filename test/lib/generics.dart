@@ -4,23 +4,17 @@ import 'package:swift_composer/swift_composer.dart';
 
 @Compose
 abstract class SimpleGeneric<T> implements Pluggable {
-  void method(T param) {
-
-  }
+  void method(T param) {}
 }
 
 @Compose
-abstract class Param {
-
-}
+abstract class Param {}
 
 @Compose
-abstract class SimpleSpecific extends SimpleGeneric<Param> {
-
-}
+abstract class SimpleSpecific extends SimpleGeneric<Param> {}
 
 @Compose
-abstract class ComplexGeneric<A,B> {
+abstract class ComplexGeneric<A, B> {
   @Inject
   A get injectedA;
 

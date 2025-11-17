@@ -5,22 +5,15 @@ import '../lib/generics.dart' as generics;
 
 part 'config.c.dart';
 
-enum TestEnum {
-  value1,
-  value2,
-  value3,
-  value4
-}
+enum TestEnum { value1, value2, value3, value4 }
 
 class TestFromString {
   String value;
   TestFromString.fromString(this.value);
 }
 
-
 @Compose
 abstract class ConfigInjectTypes {
-
   @InjectConfig
   int get injectInt;
 
@@ -39,7 +32,6 @@ abstract class ConfigInjectTypes {
 
 @Compose
 abstract class Container {
-
   @Inject
   m1.Foo get fooInjected;
 

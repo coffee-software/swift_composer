@@ -3,9 +3,6 @@ import 'module_fruits.dart';
 
 @Compose
 abstract class Banana extends Fruit {
-
-    @JsonEncode
-    double curvative = 1.0;
-
-
+  @JsonEncode
+  double curvative = 1.0;
 }

@@ -7,7 +7,6 @@ part 'plugins.c.dart';
 
 @Compose
 abstract class SimplePlugin extends TypePlugin<foo.Foo> {
-
   @MethodPlugin
   List beforeFormat(String prefix) {
     return [prefix + ":BEFORE"];
@@ -15,23 +14,18 @@ abstract class SimplePlugin extends TypePlugin<foo.Foo> {
 
   @MethodPlugin
   String afterFormat(String ret) => "AFTER:" + ret;
-
 }
 
 @Compose
 abstract class MoreComplexPlugin extends TypePlugin<foo.Foo> {
-
   @Inject
   bar.Bar get barField;
-
 }
 
 @Compose
 abstract class PluginOnGeneric extends TypePlugin<generics.SimpleGeneric> {
-
   @Inject
   bar.Bar get barField;
-
 }
 
 @Compose
@@ -58,6 +52,4 @@ abstract class GenericContainer<T> {
 }
 
 @Compose
-class ContainerFoo extends GenericContainer<foo.Foo> {
-
-}
+class ContainerFoo extends GenericContainer<foo.Foo> {}

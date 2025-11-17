@@ -3,7 +3,6 @@ import 'package:swift_composer/swift_composer.dart';
 // ignore: constant_identifier_names
 const JsonEncode = true;
 
-
 @Compose
 abstract class AllAvailableFruits {
   @SubtypeFactory
@@ -12,7 +11,6 @@ abstract class AllAvailableFruits {
 
 @Compose
 abstract class Fruit implements Pluggable {
-
   @InjectClassName
   String get className;
 
@@ -32,17 +30,16 @@ abstract class Fruit implements Pluggable {
   @JsonEncode
   double width = 1.0;
 
-
   String getFullName(String prefix, String suffix) {
     return prefix + name + suffix;
   }
 
   Map toJson() {
-      Map ret = {};
-      ret['className'] = className;
-      ret['fullName'] = getFullName("this fruit is called '", "'");
-      fieldsToJson(ret);
-      return ret;
+    Map ret = {};
+    ret['className'] = className;
+    ret['fullName'] = getFullName("this fruit is called '", "'");
+    fieldsToJson(ret);
+    return ret;
   }
 
   @Compile
@@ -61,5 +58,4 @@ abstract class Fruit implements Pluggable {
   void _fieldsToJson2(Map target, String name, double field) {
     target[name] = field;
   }
-
 }

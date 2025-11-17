@@ -13,20 +13,18 @@ abstract class Complex {
 
 @Compose
 abstract class Container {
+  @Factory
+  module_test.Foo createFoo();
 
-    @Factory
-    module_test.Foo createFoo();
+  @Factory
+  Complex createComplex(String requiredString, module_test.Foo requiredFoo);
 
-    @Factory
-    Complex createComplex(String requiredString, module_test.Foo requiredFoo);
+  @SubtypeFactory
+  module_test.Foo createSubFoo(String className);
 
-    @SubtypeFactory
-    module_test.Foo createSubFoo(String className);
-
-    void test(){
-      module_test.Foo x1 = createFoo();
-      module_test.Foo x2 = createSubFoo('module_test.Foo');
-      Complex complex = createComplex('text', x1);
-    }
-
+  void test() {
+    module_test.Foo x1 = createFoo();
+    module_test.Foo x2 = createSubFoo('module_test.Foo');
+    Complex complex = createComplex('text', x1);
+  }
 }

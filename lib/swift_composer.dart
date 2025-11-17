@@ -37,7 +37,6 @@ class SubtypeInfo {
 }
 
 abstract class SubtypesOf<T> {
-
   Map<String, SubtypeInfo> get allSubtypes;
   Iterable<String> get allClassNames => allSubtypes.keys;
 
@@ -82,7 +81,6 @@ abstract class Pluggable {
 
 @ComposeSubtypes
 abstract class TypePlugin<T> {
-
   @Require
   late T decorated;
 

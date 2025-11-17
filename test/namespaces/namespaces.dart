@@ -7,9 +7,7 @@ import '../lib/generics.dart' as generics_module;
 
 part 'namespaces.c.dart';
 
-class Foo {
-
-}
+class Foo {}
 
 class RootClass {
   late generics_module.SimpleGeneric<Foo> specificField;
@@ -19,6 +17,4 @@ class GenericRootClass<T> {
   late generics_module.SimpleGeneric<T> genericField;
 }
 
-class SpecificRootClass extends GenericRootClass<Foo> {
-
-}
+class SpecificRootClass extends GenericRootClass<Foo> {}

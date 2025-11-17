@@ -10,16 +10,10 @@ abstract class Generic<T, F extends module_test.Foo> {
 
   @SubtypeFactory
   F factoryForFoo(String className);
-
 }
 
 @Compose
-abstract class Generic2<A> extends Generic<A, module_test.FooChild> {
-
-}
-
+abstract class Generic2<A> extends Generic<A, module_test.FooChild> {}
 
 @Compose
-abstract class TypedGeneric2 extends Generic2<module_test.Foo> {
-
-}
+abstract class TypedGeneric2 extends Generic2<module_test.Foo> {}

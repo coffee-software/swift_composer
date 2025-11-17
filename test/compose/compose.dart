@@ -6,7 +6,6 @@ part 'compose.c.dart';
 
 @Compose
 abstract class Container {
-
   @Inject
   foo.Foo get fooInjected;
 
