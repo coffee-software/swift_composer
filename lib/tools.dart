@@ -10,7 +10,7 @@ class DiConfig {
 
   void _mergeMaps(Map first, Map other, String? prefix) {
     for (var key in other.keys) {
-      String prefixedKey = (prefix != null) ? '$prefix.' + key : key;
+      String prefixedKey = (prefix != null) ? '$prefix.$key' : key;
       if (first.containsKey(prefixedKey) && first[prefixedKey] is Map) {
         _mergeMaps(first[prefixedKey] as Map, other[key], null);
       } else {

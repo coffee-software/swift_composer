@@ -1,5 +1,6 @@
 import 'package:swift_composer/swift_composer.dart';
 
+// ignore: constant_identifier_names
 const JsonEncode = true;
 
 

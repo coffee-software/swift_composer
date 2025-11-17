@@ -223,7 +223,7 @@ class TypeInfo {
         switch (fieldType.uniqueName){
           case "String":
           case "String?":
-            return '"' + typeConfig[field.name].replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"';
+            return '"${typeConfig[field.name].replaceAll('"', '\\"').replaceAll('\n', '\\n')}"';
           case "int":
           case "double":
           case "bool":
@@ -232,7 +232,7 @@ class TypeInfo {
           case "bool?":
             return typeConfig[field.name].toString();
           case "List<String>":
-            return '[' + typeConfig[field.name].map((e) => '"' + e.replaceAll('"', '\\"').replaceAll('\n', '\\n') + '"').join(',') + ']';
+            return '[${typeConfig[field.name].map((e) => '"${e.replaceAll('"', '\\"').replaceAll('\n', '\\n')}"').join(',')}]';
           case "Map<dynamic,dynamic>?":
             return jsonEncode(typeConfig[field.name]);
           case "Map<dynamic,dynamic>":

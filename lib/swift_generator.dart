@@ -543,7 +543,7 @@ class SwiftGenerator extends Generator {
   const SwiftGenerator(this.options);
 
   @override
-  FutureOr<String?> generate(LibraryReader library, BuildStep step) async {
+  FutureOr<String?> generate(LibraryReader library, BuildStep buildStep) async {
     bool debug = options.config.containsKey('debug') ? options.config['debug'] : false;
     //parts are not available at build time trough .fragments so we check manually for part declaration:
     var fileName = library.element.firstFragment.source.fullName.split('/').last;
@@ -553,7 +553,7 @@ class SwiftGenerator extends Generator {
           CompiledOmGenerator(
               OutputWriter(debug),
               library,
-              step,
+              buildStep,
               DiConfig(),
               GenerationTimer(),
               debug
