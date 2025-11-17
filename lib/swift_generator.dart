@@ -1,6 +1,7 @@
 library;
 
 import 'dart:convert';
+import 'dart:isolate';
 
 import 'package:path/path.dart';
 import 'package:source_gen/source_gen.dart';
@@ -291,28 +292,16 @@ class CompiledOmGenerator implements TemplateLoader {
   Future<void> _loadLibraryFiles() async {
     var packagesMap = <String, String>{};
 
-    File packagesFile = File(
-      '${Directory.current.path}/.dart_tool/package_config.json',
-    );
-    var packagesInfo = jsonDecode(packagesFile.readAsStringSync());
-    for (var i = 0; i < packagesInfo['packages'].length; i++) {
-      String name = packagesInfo['packages'][i]['name'];
-      String root = packagesInfo['packages'][i]['rootUri'];
-      if (root.startsWith('file://')) {
-        root = root.replaceFirst('file://', '');
-      }
-      if (!root.startsWith('/')) {
-        root = '${Directory.current.path}/.dart_tool/$root';
-      }
-      packagesMap[name] = root;
-    }
-
     for (var import in library.element.firstFragment.libraryImports) {
       if (import.uri is! DirectiveUriWithRelativeUriString) {
         continue;
       }
       String stringUri =
           (import.uri as DirectiveUriWithRelativeUriString).relativeUriString;
+      String resolvedPath = (await Isolate.resolvePackageUri(Uri.parse(stringUri))).toString();
+      if (resolvedPath.startsWith('file://')) {
+        resolvedPath = resolvedPath.replaceFirst('file://', '');
+      }
 
       if (stringUri.contains(':')) {
         String schema = stringUri.substring(0, stringUri.indexOf(':'));
@@ -323,17 +312,14 @@ class CompiledOmGenerator implements TemplateLoader {
           stringUri.indexOf(':') + 1,
           stringUri.indexOf('/'),
         );
-        if (packagesMap.containsKey(package)) {
-          String file = stringUri.substring(stringUri.indexOf('/') + 1);
-          modules.add(
-            ImportedModule(
-              package,
-              '${packagesMap[package]!}/lib/$file',
-              packagesMap[package]!,
-              prefix: import.prefix?.element.name,
-            ),
-          );
-        }
+        modules.add(
+          ImportedModule(
+            package,
+            resolvedPath,
+            resolvedPath.substring(0, resolvedPath.indexOf('/lib/')),
+            prefix: import.prefix?.element.name,
+          ),
+        );
       } else {
         modules.add(
           ImportedModule(
