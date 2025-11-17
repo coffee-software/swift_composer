@@ -98,12 +98,12 @@ class TypeInfo {
 
   String get uniqueName {
     return fullName + (typeArguments.isNotEmpty ? '<${typeArguments.map((e)=>e.uniqueName).join(',')}>' : '') + (isNullable ? '?' : '');
-    //':' + type.getDisplayString(withNullability: true)
-    //':' + ((type is ParameterizedType) ? (type as ParameterizedType).typeArguments.map((e) => e.getDisplayString(withNullability: true)).join(',') : 'NP') +
+    //':' + type.getDisplayString()
+    //':' + ((type is ParameterizedType) ? (type as ParameterizedType).typeArguments.map((e) => e.getDisplayString()).join(',') : 'NP') +
   }
 
   String get debugInfo {
-    return '$uniqueName ${hasInterceptor() ? 'INTERCEPTED' : ''} ${isGeneric() ? 'GENERIC' : ''} [${typeArgumentsMap().map((key, value) => MapEntry(key.name, '${key.name!} = ${value.getDisplayString(withNullability: true)}')).values.join(',')}   ${typeArgumentsMap().map((key, value) => MapEntry(key.name, '${key.hashCode} = ${value.hashCode}')).values.join(',')}   ${typeArgumentsMap().map((key, value) => MapEntry(key.name, '${key.hashCode} = ${value.runtimeType}')).values.join(',')}]';
+    return '$uniqueName ${hasInterceptor() ? 'INTERCEPTED' : ''} ${isGeneric() ? 'GENERIC' : ''} [${typeArgumentsMap().map((key, value) => MapEntry(key.name, '${key.name!} = ${value.getDisplayString()}')).values.join(',')}   ${typeArgumentsMap().map((key, value) => MapEntry(key.name, '${key.hashCode} = ${value.hashCode}')).values.join(',')}   ${typeArgumentsMap().map((key, value) => MapEntry(key.name, '${key.hashCode} = ${value.runtimeType}')).values.join(',')}]';
   }
 
   String get varName {
@@ -280,8 +280,8 @@ class TypeInfo {
       case '@Require':
         return field.name;
       case '@InjectFields':
-        String args = allFields().where((f) => f.type.getDisplayString(withNullability: true) != 'dynamic').map((e) => '\'${e.name}\':this.${e.name}').join(',');
-        return 'new ${fieldType.type.getDisplayString(withNullability: true)}({$args});\n';
+        String args = allFields().where((f) => f.type.getDisplayString() != 'dynamic').map((e) => '\'${e.name}\':this.${e.name}').join(',');
+        return 'new ${fieldType.type.getDisplayString()}({$args});\n';
     }
     return null;
   }
@@ -479,13 +479,13 @@ class TypeInfo {
 
     output.writeLn("// type arguments[1]:");
     for (var k in typeArgumentsMap().keys) {
-      output.writeLn("// ${k.name}[${k.hashCode.toString()}] => ${typeArgumentsMap()[k]!.getDisplayString(withNullability: true)}[${typeArgumentsMap()[k].hashCode.toString()}]");
+      output.writeLn("// ${k.name}[${k.hashCode.toString()}] => ${typeArgumentsMap()[k]!.getDisplayString()}[${typeArgumentsMap()[k].hashCode.toString()}]");
     }
 
     output.writeLn("// type arguments[2]:");
     for (var k in typeArguments) {
       output.writeLn("// ENCLOSING: ${k.element != null ? (k.element!.enclosingElement.name ?? "XXX") : "NULL"}");
-      output.writeLn("// ${k.type.getDisplayString(withNullability: true)}[${k.hashCode.toString()}]");
+      output.writeLn("// ${k.type.getDisplayString()}[${k.hashCode.toString()}]");
     }
 
     if (element != null) {
@@ -499,7 +499,7 @@ class TypeInfo {
       }
       for (var element in element!.thisType.typeArguments) {
         output.writeLn(
-            "// argument: ${element.getDisplayString(withNullability: true)} ${element.hashCode.toString()}");
+            "// argument: ${element.getDisplayString()} ${element.hashCode.toString()}");
       }
 
       for (var s in element!.allSupertypes) {
@@ -513,7 +513,7 @@ class TypeInfo {
         }
         for (var element in s.typeArguments) {
           output.writeLn(
-              "// argument: ${element.getDisplayString(withNullability: true)} ${element.hashCode.toString()}");
+              "// argument: ${element.getDisplayString()} ${element.hashCode.toString()}");
         }
       }
       //lines.add("//config: ${json.encode(typeConfig)}");
@@ -570,7 +570,7 @@ class TypeInfo {
 
     allFields().forEach((fieldElement){
       if (fieldElement.setter != null) {
-        //output.writeLn("//${fieldElement.type.getDisplayString(withNullability: true)}");
+        //output.writeLn("//${fieldElement.type.getDisplayString()}");
 
         if (elementInjectionType(fieldElement) == '@Create') {
           //TMP
@@ -614,12 +614,12 @@ class TypeInfo {
       //fieldElement.type
       //ClassElement
 
-      /*lines.add('//ELEMENT:' + fieldElement.getDisplayString(withNullability: true));
+      /*lines.add('//ELEMENT:' + fieldElement.getDisplayString());
         var t = fieldElement.type;
         if (this.type is ParameterizedType) {
           lines.add('//TYPE is ParameterizedType');
           (this.type as ParameterizedType).typeArguments.forEach((element) {
-            lines.add('//typeArguments[]:' + element.getDisplayString(withNullability: true));
+            lines.add('//typeArguments[]:' + element.getDisplayString());
           });
         }
 
@@ -632,7 +632,7 @@ class TypeInfo {
         if (t is ParameterizedType) {
           lines.add('//FIELD TYPE is ParameterizedType');
           t.typeArguments.forEach((element) {
-            lines.add('//typeArguments[]:' + element.getDisplayString(withNullability: true));
+            lines.add('//typeArguments[]:' + element.getDisplayString());
           });
         }
         var x = typeArgumentsMap().containsKey(t) ? typeArgumentsMap()[t] : t;
@@ -712,7 +712,7 @@ class TypeInfo {
 
     if (elementInjectionType(methodElement) == '@SubtypeFactory') {
       if ((methodElement.firstFragment.formalParameters[0].name != 'className') ||
-          (methodElement.firstFragment.formalParameters[0].element.type.getDisplayString(withNullability: true) != 'String')) {
+          (methodElement.firstFragment.formalParameters[0].element.type.getDisplayString() != 'String')) {
         throw Exception('SubtypeFactory first argument needs to be named className and be of type String');
       }
       List<String> argsDef = [];
@@ -956,7 +956,7 @@ class CompiledFieldMethodPart {
                   break;
                 }
                 DartObject annotationField = constantValue.getField(nameParts[1])!;
-                var annotationValue = annotationField.type!.getDisplayString(withNullability: true);
+                var annotationValue = annotationField.type!.getDisplayString();
                 switch (annotationValue) {
                   case 'Type':
                     //allow passing type as annotation
@@ -1102,7 +1102,7 @@ class TypeMap {
         name = classNames[type.element]!;
       }
     }*/
-    //output.writeLn('//!!!!' + type.getDisplayString(withNullability: true) + ' <=> ' + (type.element == null ? 'NULL' : type.element!.name!));
+    //output.writeLn('//!!!!' + type.getDisplayString() + ' <=> ' + (type.element == null ? 'NULL' : type.element!.name!));
 
     TypeInfo ret = TypeInfo(
         this,
@@ -1233,15 +1233,15 @@ class TypeMap {
         bool parentFits = true;
         //isSubtype = isSubtype || i.displayName == parentType.displayName;
         //TODO: add results to debug info, fix in tests
-        String stName = st.getDisplayString(withNullability: true);
+        String stName = st.getDisplayString();
         if (stName.contains('<')) stName = stName.substring(0, stName.indexOf('<'));
-        String parentTypeName = parentType.type.getDisplayString(withNullability: true);
+        String parentTypeName = parentType.type.getDisplayString();
         if (parentTypeName.contains('<')) parentTypeName = parentTypeName.substring(0, parentTypeName.indexOf('<'));
         parentFits = parentFits & (stName == parentTypeName);
         if (parentType.typeArguments.length == st.typeArguments.length) {
           for (var i=0; i < parentType.typeArguments.length; i++) {
             parentFits = parentFits && (
-                (parentType.typeArguments[i].type.getDisplayString(withNullability: false) == st.typeArguments[i].getDisplayString(withNullability: false))
+                (parentType.typeArguments[i].type.getDisplayString() == st.typeArguments[i].getDisplayString())
                     //|| typeSystem.isSubtypeOf(parentType.typeArguments[i].type, st.typeArguments[i])  //TODO ????? maybe both? or maybe for separate usage case?
                     || typeSystem.isSubtypeOf(st.typeArguments[i], parentType.typeArguments[i].type)
             );//
