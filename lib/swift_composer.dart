@@ -24,7 +24,7 @@ const InjectClassNames = true;
 // ignore: constant_identifier_names
 const InjectConfig = true;
 
-//TODO:
+//TODO: allow lists?
 // ignore: constant_identifier_names
 const InjectInstances = true;
 
