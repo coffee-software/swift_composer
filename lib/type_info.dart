@@ -832,7 +832,7 @@ class CompiledFieldMethodPart {
 
   String get methodName => 'cfs_${methodElement.name!}${type.flatName}';
 
-  getPartDeclaration() {
+  String getPartDeclaration() {
     List<String> params = [];
     params.add("${type.fullName} dis");
     params.addAll(
@@ -844,7 +844,7 @@ class CompiledFieldMethodPart {
     return 'void $methodName(${params.join(",")})';
   }
 
-  getCallExpression(String thisName) {
+  String getCallExpression(String thisName) {
     List<String> params = [thisName];
     params.addAll(methodElement.firstFragment.formalParameters.map((mp) => mp.name!));
     return '$methodName(${params.join(",")});';

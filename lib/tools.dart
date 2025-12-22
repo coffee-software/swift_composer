@@ -26,19 +26,19 @@ class OutputWriter {
 
   final List<String> _lines = [];
 
-  writeLn(String line, {bool debug = false}) {
+  void writeLn(String line, {bool debug = false}) {
     if (this.debug == true || debug == false) {
       _lines.add(line);
     }
   }
 
-  writeMany(List<String> lines, {bool debug = false}) {
+  void writeMany(List<String> lines, {bool debug = false}) {
     if (this.debug == true || debug == false) {
       _lines.addAll(lines);
     }
   }
 
-  writeSplit() {
+  void writeSplit() {
     writeLn('// **************************************************************************');
   }
 

@@ -9,11 +9,11 @@ part 'plugins.c.dart';
 abstract class SimplePlugin extends TypePlugin<foo.Foo> {
   @MethodPlugin
   List beforeFormat(String prefix) {
-    return [prefix + ":BEFORE"];
+    return ["$prefix:BEFORE"];
   }
 
   @MethodPlugin
-  String afterFormat(String ret) => "AFTER:" + ret;
+  String afterFormat(String ret) => "AFTER:$ret";
 }
 
 @Compose

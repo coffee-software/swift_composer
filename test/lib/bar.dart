@@ -1,4 +1,4 @@
-library bar;
+library;
 
 import 'package:swift_composer/swift_composer.dart';
 

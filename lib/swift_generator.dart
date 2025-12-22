@@ -1,6 +1,5 @@
 library;
 
-import 'dart:convert';
 import 'dart:isolate';
 
 import 'package:path/path.dart';

@@ -1,4 +1,4 @@
-library generics;
+library;
 
 import 'package:swift_composer/swift_composer.dart';
 
@@ -28,6 +28,7 @@ abstract class ComplexGeneric<A, B> {
 
 @Compose
 abstract class SuperComplexGeneric<A, B> extends ComplexGeneric<Param, A> {
+  @override
   A? method(Param param) {
     B local;
     return null;

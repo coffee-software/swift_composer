@@ -1,4 +1,4 @@
-library foo2;
+library;
 
 import 'package:swift_composer/swift_composer.dart';
 

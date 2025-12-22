@@ -22,6 +22,7 @@ abstract class Base {
 
   @CompileFieldsOfType
   void _copyFieldsFromJsonFoo(Map source, String name, foo.Foo field) {
+    // ignore: unnecessary_this
     field = this.createFooChild(source[name]);
   }
 
@@ -37,8 +38,8 @@ abstract class Container extends Base {
   late foo.Foo fifth;
 
   Map toJson() {
-    Map ret = new Map();
-    this.fieldsToJson(ret);
+    Map ret = {};
+    fieldsToJson(ret);
     return ret;
   }
 

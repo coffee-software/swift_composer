@@ -1,4 +1,4 @@
-library swift_composer.test;
+library;
 
 import 'package:test/test.dart';
 
@@ -14,7 +14,7 @@ import 'mixins/mixins.dart' as mixins_test;
 
 void main() {
   test('compose', () {
-    var container = new compose_test.$Container(
+    var container = compose_test.$Container(
       compose_test.$om.foo_Foo,
       compose_test.$om.generics_SimpleGeneric_foo_Foo_,
       compose_test.$om.generics_SimpleGeneric_String_,
