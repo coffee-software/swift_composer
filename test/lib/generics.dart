@@ -28,7 +28,6 @@ abstract class ComplexGeneric<A, B> {
 
 @Compose
 abstract class SuperComplexGeneric<A, B> extends ComplexGeneric<Param, A> {
-
   B? local;
 
   @override
