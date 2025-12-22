@@ -13,16 +13,10 @@ import 'package:build/build.dart';
 
 import 'tools.dart';
 
-Future<ResolvedLibraryResult> _getResolvedLibrary(
-  LibraryElement library,
-  Resolver resolver,
-) async {
-  final freshLibrary = await resolver.libraryFor(
-    await resolver.assetIdForElement(library),
-  );
+Future<ResolvedLibraryResult> _getResolvedLibrary(LibraryElement library, Resolver resolver) async {
+  final freshLibrary = await resolver.libraryFor(await resolver.assetIdForElement(library));
   final freshSession = freshLibrary.session;
-  return await freshSession.getResolvedLibraryByElement(freshLibrary)
-      as ResolvedLibraryResult;
+  return await freshSession.getResolvedLibraryByElement(freshLibrary) as ResolvedLibraryResult;
 }
 
 Map<int, String> sourcesCache = {};
@@ -36,15 +30,11 @@ extension MethodElementSource on MethodElement {
     try {
       // TODO: https://github.com/dart-lang/build/issues/2634
       // find better way to get method source?
-      ParsedLibraryResult result =
-          session!.getParsedLibraryByElement(library) as ParsedLibraryResult;
+      ParsedLibraryResult result = session!.getParsedLibraryByElement(library) as ParsedLibraryResult;
       part = result.getFragmentDeclaration(firstFragment)!.node.toSource();
     } on InconsistentAnalysisException {
       var resolver = step.resolver;
-      ResolvedLibraryResult result = await _getResolvedLibrary(
-        library,
-        resolver,
-      );
+      ResolvedLibraryResult result = await _getResolvedLibrary(library, resolver);
       part = result.getFragmentDeclaration(firstFragment)!.node.toSource();
     }
     //named parameters can be defined
@@ -72,12 +62,7 @@ class TypeInfo {
   List<TypeInfo> typeArguments;
   DiConfig config;
 
-  TypeInfo(
-    this.typeMap,
-    this.type,
-    this.config, {
-    this.typeArguments = const [],
-  });
+  TypeInfo(this.typeMap, this.type, this.config, {this.typeArguments = const []});
 
   ClassElement? get element {
     if ((type.element != null) && (type.element is ClassElement)) {
@@ -98,8 +83,7 @@ class TypeInfo {
 
   // name accessible in local context
   String get fullName {
-    if ((type.element != null) &&
-        (typeMap.classNames.containsKey(type.element))) {
+    if ((type.element != null) && (typeMap.classNames.containsKey(type.element))) {
       return typeMap.classNames[type.element]!;
     } else {
       //TODO: validate if core?
@@ -115,11 +99,7 @@ class TypeInfo {
   }
 
   String get uniqueName {
-    return fullName +
-        (typeArguments.isNotEmpty
-            ? '<${typeArguments.map((e) => e.uniqueName).join(',')}>'
-            : '') +
-        (isNullable ? '?' : '');
+    return fullName + (typeArguments.isNotEmpty ? '<${typeArguments.map((e) => e.uniqueName).join(',')}>' : '') + (isNullable ? '?' : '');
     //':' + type.getDisplayString()
     //':' + ((type is ParameterizedType) ? (type as ParameterizedType).typeArguments.map((e) => e.getDisplayString()).join(',') : 'NP') +
   }
@@ -137,9 +117,7 @@ class TypeInfo {
   }
 
   bool isGeneric() {
-    return element != null &&
-        (typeArguments.isEmpty) &&
-        (element!.typeParameters.isNotEmpty);
+    return element != null && (typeArguments.isEmpty) && (element!.typeParameters.isNotEmpty);
   }
 
   Map get typeConfig {
@@ -235,9 +213,7 @@ class TypeInfo {
         if (!typeConfig.containsKey(field.name)) {
           if (field.getter!.isAbstract) {
             if (!fieldType.isNullable) {
-              throw Exception(
-                "missing config value for non nullable field ${fieldType.fullName} ${field.name}",
-              );
+              throw Exception("missing config value for non nullable field ${fieldType.fullName} ${field.name}");
             }
             return 'null';
           } else {
@@ -297,19 +273,13 @@ class TypeInfo {
   }
 
   String? getFieldAssignmentValue(FieldElement field) {
-    TypeInfo fieldType = typeMap.fromDartType(
-      field.type,
-      context: typeArgumentsMap(),
-    );
+    TypeInfo fieldType = typeMap.fromDartType(field.type, context: typeArgumentsMap());
 
     switch (elementInjectionType(field)) {
       case '@Require':
         return field.name;
       case '@InjectFields':
-        String args = allFields()
-            .where((f) => f.type.getDisplayString() != 'dynamic')
-            .map((e) => '\'${e.name}\':this.${e.name}')
-            .join(',');
+        String args = allFields().where((f) => f.type.getDisplayString() != 'dynamic').map((e) => '\'${e.name}\':this.${e.name}').join(',');
         return 'new ${fieldType.type.getDisplayString()}({$args});\n';
     }
     return null;
@@ -395,10 +365,7 @@ class TypeInfo {
   List<FieldElement> allFields({bool parentFirst = false}) {
     List<FieldElement> allFields = [];
 
-    for (var element
-        in (parentFirst
-            ? allClassElementsPath().toList().reversed
-            : allClassElementsPath())) {
+    for (var element in (parentFirst ? allClassElementsPath().toList().reversed : allClassElementsPath())) {
       for (var f in element.fields) {
         if (!f.name!.startsWith('_')) {
           allFields.add(f);
@@ -496,75 +463,48 @@ class TypeInfo {
     allMethods().forEach((methodElement) {
       for (var typeParameterElement in methodElement.typeParameters) {
         if (typeParameterElement.bound != null) {
-          typeMap.fromDartType(
-            typeParameterElement.bound!,
-            context: typeArgumentsMap(),
-          );
+          typeMap.fromDartType(typeParameterElement.bound!, context: typeArgumentsMap());
         }
       }
       methodElement.formalParameters.map((parameterElement) {
-        typeMap.fromDartType(
-          parameterElement.type,
-          context: typeArgumentsMap(),
-        );
+        typeMap.fromDartType(parameterElement.type, context: typeArgumentsMap());
       });
-      typeMap.fromDartType(
-        methodElement.returnType,
-        context: typeArgumentsMap(),
-      );
+      typeMap.fromDartType(methodElement.returnType, context: typeArgumentsMap());
     });
   }
 
   Future<void> writeDebugInfo(OutputWriter output) async {
     output.writeLn("// type arguments[1]:");
     for (var k in typeArgumentsMap().keys) {
-      output.writeLn(
-        "// ${k.name}[${k.hashCode.toString()}] => ${typeArgumentsMap()[k]!.getDisplayString()}[${typeArgumentsMap()[k].hashCode.toString()}]",
-      );
+      output.writeLn("// ${k.name}[${k.hashCode.toString()}] => ${typeArgumentsMap()[k]!.getDisplayString()}[${typeArgumentsMap()[k].hashCode.toString()}]");
     }
 
     output.writeLn("// type arguments[2]:");
     for (var k in typeArguments) {
-      output.writeLn(
-        "// ENCLOSING: ${k.element != null ? (k.element!.enclosingElement.name ?? "XXX") : "NULL"}",
-      );
-      output.writeLn(
-        "// ${k.type.getDisplayString()}[${k.hashCode.toString()}]",
-      );
+      output.writeLn("// ENCLOSING: ${k.element != null ? (k.element!.enclosingElement.name ?? "XXX") : "NULL"}");
+      output.writeLn("// ${k.type.getDisplayString()}[${k.hashCode.toString()}]");
     }
 
     if (element != null) {
-      output.writeLn(
-        "// can be singleton: ${canBeSingleton() ? 'TRUE' : 'FALSE'}",
-      );
+      output.writeLn("// can be singleton: ${canBeSingleton() ? 'TRUE' : 'FALSE'}");
       for (var element in element!.typeParameters) {
-        output.writeLn(
-          "// parameter: ${element.name} ${element.hashCode.toString()}",
-        );
+        output.writeLn("// parameter: ${element.name} ${element.hashCode.toString()}");
         //lines.add("//parameter: ${element.bound == null ? "NULL" : element.bound.name}");
         //lines.add("//parameter: ${element.instantiate(nullabilitySuffix: NullabilitySuffix.none).element.name}");
       }
       for (var element in element!.thisType.typeArguments) {
-        output.writeLn(
-          "// argument: ${element.getDisplayString()} ${element.hashCode.toString()}",
-        );
+        output.writeLn("// argument: ${element.getDisplayString()} ${element.hashCode.toString()}");
       }
 
       for (var s in element!.allSupertypes) {
-        output.writeLn(
-          "// parent: ${s.element.displayName} ${s.element.metadata.toString()}",
-        );
+        output.writeLn("// parent: ${s.element.displayName} ${s.element.metadata.toString()}");
         for (var element in s.element.typeParameters) {
-          output.writeLn(
-            "// parameter: ${element.name} ${element.hashCode.toString()}",
-          );
+          output.writeLn("// parameter: ${element.name} ${element.hashCode.toString()}");
           //lines.add("//parameter: ${element.bound == null ? "NULL" : element.bound.name}");
           //lines.add("//parameter: ${element.instantiate(nullabilitySuffix: NullabilitySuffix.none).element.name}");
         }
         for (var element in s.typeArguments) {
-          output.writeLn(
-            "// argument: ${element.getDisplayString()} ${element.hashCode.toString()}",
-          );
+          output.writeLn("// argument: ${element.getDisplayString()} ${element.hashCode.toString()}");
         }
       }
       //lines.add("//config: ${json.encode(typeConfig)}");
@@ -584,40 +524,26 @@ class TypeInfo {
     }
   }
 
-  Future<void> generateInterceptor(
-    OutputWriter output,
-    TemplateLoader templateLoader,
-  ) async {
+  Future<void> generateInterceptor(OutputWriter output, TemplateLoader templateLoader) async {
     if (typeArguments.isNotEmpty) {
       String parent =
           '\$${fullName.replaceAll('.', '_')}'
           '<${typeArguments.map((e) => e.creatorName).join(',')}>';
       parent = uniqueName;
       output.writeLn('//parametrized type');
-      output.writeLn(
-        'class \$$flatName extends $parent implements Pluggable {',
-      );
+      output.writeLn('class \$$flatName extends $parent implements Pluggable {');
     } else {
       var typeArgsList = element!.typeParameters
           .map((e) {
-            return e.name! +
-                (e.bound != null
-                    ? " extends ${(typeMap.fromDartType(e.bound!, context: typeArgumentsMap())).fullName}"
-                    : '');
+            return e.name! + (e.bound != null ? " extends ${(typeMap.fromDartType(e.bound!, context: typeArgumentsMap())).fullName}" : '');
           })
           .join(',');
-      var typeArgs = element!.typeParameters.isNotEmpty
-          ? "<$typeArgsList>"
-          : '';
+      var typeArgs = element!.typeParameters.isNotEmpty ? "<$typeArgsList>" : '';
 
-      var shortArgs = element!.typeParameters.isNotEmpty
-          ? "<${element!.typeParameters.map((e) => e.name).join(',')}>"
-          : '';
+      var shortArgs = element!.typeParameters.isNotEmpty ? "<${element!.typeParameters.map((e) => e.name).join(',')}>" : '';
 
       var abstract = element!.typeParameters.isNotEmpty ? 'abstract ' : '';
-      output.writeLn(
-        '${abstract}class \$$flatName$typeArgs extends $fullName$shortArgs implements Pluggable {',
-      );
+      output.writeLn('${abstract}class \$$flatName$typeArgs extends $fullName$shortArgs implements Pluggable {');
       if (element!.typeParameters.isNotEmpty) {
         output.writeLn('}');
         return;
@@ -636,19 +562,14 @@ class TypeInfo {
 
         if (elementInjectionType(fieldElement) == '@Create') {
           //TMP
-          TypeInfo ti = typeMap.fromDartType(
-            fieldElement.type,
-            context: typeArgumentsMap(),
-          );
+          TypeInfo ti = typeMap.fromDartType(fieldElement.type, context: typeArgumentsMap());
           output.writeLn("//${ti.uniqueName}", debug: true);
           typeMap.getNonAbstractSubtypes(ti).forEach((element) {
             output.writeLn("// c: ${element.uniqueName}", debug: true);
           });
 
           TypeInfo candidate = typeMap.getBestCandidate(ti);
-          output.writeLn(
-            'this.${fieldElement.name} = ${candidate.generateCreator()};',
-          );
+          output.writeLn('this.${fieldElement.name} = ${candidate.generateCreator()};');
         } else {
           String? value = getFieldAssignmentValue(fieldElement);
           if (value != null) {
@@ -711,18 +632,13 @@ class TypeInfo {
         }
         lines.add('//TEST8:' + x2.name);
       */
-      TypeInfo fieldType = typeMap.fromDartType(
-        fieldElement.type,
-        context: typeArgumentsMap(),
-      );
+      TypeInfo fieldType = typeMap.fromDartType(fieldElement.type, context: typeArgumentsMap());
 
       //fieldElement.type.isDartAsyncFutureOr
       //output.writeLn("// ${fieldType.uniqueName} ${fieldElement.name}");
       String? value = getFieldInitializationValue(fieldType, fieldElement);
       if (value != null) {
-        output.writeLn(
-          "${fieldType.uniqueName} get ${fieldElement.name} => $value;",
-        );
+        output.writeLn("${fieldType.uniqueName} get ${fieldElement.name} => $value;");
       }
     });
 
@@ -730,66 +646,43 @@ class TypeInfo {
       List<String> methodLines = await generateMethodOverride(methodElement);
       if (methodLines.isNotEmpty) {
         output.writeLn('//method ${methodElement.name} override');
-        TypeInfo returnType = typeMap.fromDartType(
-          methodElement.returnType,
-          context: typeArgumentsMap(),
-        );
+        TypeInfo returnType = typeMap.fromDartType(methodElement.returnType, context: typeArgumentsMap());
         var typeArgsList = methodElement.typeParameters
             .map((e) {
-              return e.name! +
-                  (e.bound != null
-                      ? " extends ${(typeMap.fromDartType(e.bound!, context: typeArgumentsMap())).fullName}"
-                      : '');
+              return e.name! + (e.bound != null ? " extends ${(typeMap.fromDartType(e.bound!, context: typeArgumentsMap())).fullName}" : '');
             })
             .join(',');
         var typeArgs = typeArgsList.isNotEmpty ? "<$typeArgsList>" : '';
 
-        output.writeLn(
-          "${returnType.uniqueName} ${methodElement.name}$typeArgs(",
-        );
+        output.writeLn("${returnType.uniqueName} ${methodElement.name}$typeArgs(");
         output.writeLn(
           methodElement.formalParameters
               .map((mp) {
-                TypeInfo parameterType = typeMap.fromDartType(
-                  mp.type,
-                  context: typeArgumentsMap(),
-                );
+                TypeInfo parameterType = typeMap.fromDartType(mp.type, context: typeArgumentsMap());
                 return "${parameterType.uniqueName} ${mp.name}";
               })
               .join(","),
         );
 
-        output.writeLn(
-          ") ${methodElement.firstFragment.isAsynchronous ? 'async' : ''} {",
-        );
+        output.writeLn(") ${methodElement.firstFragment.isAsynchronous ? 'async' : ''} {");
         output.writeMany(methodLines);
         output.writeLn("}");
       }
     }
     for (var accessorElement in allGetters()) {
       if (accessorElement.name!.startsWith('override_')) {
-        String originalAccessorName = accessorElement.name!.replaceFirst(
-          'override_',
-          '',
-        );
+        String originalAccessorName = accessorElement.name!.replaceFirst('override_', '');
         output.writeLn('@override');
-        output.writeLn(
-          '${accessorElement.returnType} get $originalAccessorName => override_$originalAccessorName;',
-        );
+        output.writeLn('${accessorElement.returnType} get $originalAccessorName => override_$originalAccessorName;');
       }
     }
     //generted template methods
     for (var fieldElement in allFields()) {
-      for (var metadataElement
-          in fieldElement.getter?.metadata.annotations ?? []) {
+      for (var metadataElement in fieldElement.getter?.metadata.annotations ?? []) {
         if (metadataElement.toSource() == '@Template') {
-          String? templateBody = templateLoader.load(
-            '$flatName.${fieldElement.name!}',
-          );
+          String? templateBody = templateLoader.load('$flatName.${fieldElement.name!}');
           if (templateBody != null) {
-            output.writeLn(
-              "${fieldElement.type.toString()} get ${fieldElement.name} => '''",
-            );
+            output.writeLn("${fieldElement.type.toString()} get ${fieldElement.name} => '''");
             output.writeLn(templateBody);
             output.writeLn("''';");
           }
@@ -800,47 +693,29 @@ class TypeInfo {
     output.writeLn('}');
   }
 
-  Future<List<String>> generateMethodOverride(
-    MethodElement methodElement,
-  ) async {
-    TypeInfo returnType = typeMap.fromDartType(
-      methodElement.returnType,
-      context: typeArgumentsMap(),
-    );
+  Future<List<String>> generateMethodOverride(MethodElement methodElement) async {
+    TypeInfo returnType = typeMap.fromDartType(methodElement.returnType, context: typeArgumentsMap());
     List<String> lines = [];
 
     if (elementInjectionType(methodElement) == '@SubtypeFactory') {
-      if ((methodElement.firstFragment.formalParameters[0].name !=
-              'className') ||
-          (methodElement.firstFragment.formalParameters[0].element.type
-                  .getDisplayString() !=
-              'String')) {
-        throw Exception(
-          'SubtypeFactory first argument needs to be named className and be of type String',
-        );
+      if ((methodElement.firstFragment.formalParameters[0].name != 'className') ||
+          (methodElement.firstFragment.formalParameters[0].element.type.getDisplayString() != 'String')) {
+        throw Exception('SubtypeFactory first argument needs to be named className and be of type String');
       }
       List<String> argsDef = [];
       List<String> argsInv = [];
       Map<String, TypeInfo> arguments = {};
       for (var p in methodElement.firstFragment.formalParameters) {
-        TypeInfo argType = typeMap.fromDartType(
-          p.element.type,
-          context: typeArgumentsMap(),
-        );
+        TypeInfo argType = typeMap.fromDartType(p.element.type, context: typeArgumentsMap());
         argsDef.add('${argType.uniqueName} ${p.name!}');
         argsInv.add(p.name!);
         arguments[p.name!] = argType;
       }
-      String factoryInv =
-          'createSubtypeOf${returnType.flatName}${argsInv.length}(${argsInv.join(',')})';
-      String factoryDef =
-          'createSubtypeOf${returnType.flatName}${argsInv.length}(${argsDef.join(',')})';
+      String factoryInv = 'createSubtypeOf${returnType.flatName}${argsInv.length}(${argsInv.join(',')})';
+      String factoryDef = 'createSubtypeOf${returnType.flatName}${argsInv.length}(${argsDef.join(',')})';
 
       if (!typeMap.subtypeFactories.containsKey(factoryDef)) {
-        typeMap.subtypeFactories[factoryDef] = SubtypeFactoryInfo(
-          returnType,
-          arguments,
-        );
+        typeMap.subtypeFactories[factoryDef] = SubtypeFactoryInfo(returnType, arguments);
       }
       lines.add('return \$om.$factoryInv;');
     } else if (elementInjectionType(methodElement) == '@Factory') {
@@ -856,8 +731,7 @@ class TypeInfo {
           if (elementInjectionType(methodPartElement) == '@CompilePart') {
             String part = await methodPartElement.getSourceCode(typeMap.step);
             lines.add(part);
-          } else if (elementInjectionType(methodPartElement) ==
-              '@CompileFieldsOfType') {
+          } else if (elementInjectionType(methodPartElement) == '@CompileFieldsOfType') {
             //var fieldType = typeMap.fromDartType(methodPartElement.parameters.last.type, context:typeArgumentsMap());
             if (!typeMap.compiledMethodsByType.containsKey(methodElement)) {
               typeMap.compiledMethodsByType[methodElement] = {};
@@ -866,14 +740,7 @@ class TypeInfo {
 
             //iterated trough fields with parent first to generate parent bits first and then subclasses bits.
             for (var field in allFields(parentFirst: true)) {
-              var compiledPart =
-                  await CompiledFieldMethodPart.addFieldMethodPart(
-                    this,
-                    methodElement,
-                    methodPartElement,
-                    field,
-                    'dis',
-                  );
+              var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis');
               if (compiledPart != null && !calledParts.contains(compiledPart)) {
                 lines.add(compiledPart.getCallExpression('this'));
                 calledParts.add(compiledPart);
@@ -881,19 +748,9 @@ class TypeInfo {
             }
             for (var plugin in plugins) {
               for (var field in plugin.allFields()) {
-                var compiledPart =
-                    await CompiledFieldMethodPart.addFieldMethodPart(
-                      this,
-                      methodElement,
-                      methodPartElement,
-                      field,
-                      'dis.decorated',
-                    );
-                if (compiledPart != null &&
-                    !calledParts.contains(compiledPart)) {
-                  lines.add(
-                    compiledPart.getCallExpression('this.${plugin.varName}'),
-                  );
+                var compiledPart = await CompiledFieldMethodPart.addFieldMethodPart(this, methodElement, methodPartElement, field, 'dis.decorated');
+                if (compiledPart != null && !calledParts.contains(compiledPart)) {
+                  lines.add(compiledPart.getCallExpression('this.${plugin.varName}'));
                   calledParts.add(compiledPart);
                 }
               }
@@ -909,33 +766,25 @@ class TypeInfo {
       for (var p in plugins) {
         p.allMethods().forEach((pluginMethodElement) {
           if (elementInjectionType(pluginMethodElement) == '@MethodPlugin') {
-            if (pluginMethodElement.name ==
-                "before${methodElement.name!.substring(0, 1).toUpperCase()}${methodElement.name!.substring(1)}") {
+            if (pluginMethodElement.name == "before${methodElement.name!.substring(0, 1).toUpperCase()}${methodElement.name!.substring(1)}") {
               beforePlugins[pluginMethodElement] = p;
-            } else if (pluginMethodElement.name ==
-                "after${methodElement.name!.substring(0, 1).toUpperCase()}${methodElement.name!.substring(1)}") {
+            } else if (pluginMethodElement.name == "after${methodElement.name!.substring(0, 1).toUpperCase()}${methodElement.name!.substring(1)}") {
               afterPlugins[pluginMethodElement] = p;
             }
           }
         });
       }
 
-      String paramsStr = methodElement.firstFragment.formalParameters
-          .map((mp) => mp.name)
-          .join(",");
+      String paramsStr = methodElement.firstFragment.formalParameters.map((mp) => mp.name).join(",");
       String beforeArgsStr = '';
       if (beforePlugins.isNotEmpty) {
         lines.add('List<dynamic> args = [$paramsStr];');
         int i = 0;
-        beforeArgsStr = methodElement.firstFragment.formalParameters
-            .map((mp) => "args[${i++}]")
-            .join(',');
+        beforeArgsStr = methodElement.firstFragment.formalParameters.map((mp) => "args[${i++}]").join(',');
       }
       for (var pluginMethod in beforePlugins.keys) {
         String pluginName = beforePlugins[pluginMethod]!.varName;
-        lines.add(
-          'args = ${pluginMethod.firstFragment.isAsynchronous ? 'await' : ''} $pluginName.${pluginMethod.name}($beforeArgsStr);',
-        );
+        lines.add('args = ${pluginMethod.firstFragment.isAsynchronous ? 'await' : ''} $pluginName.${pluginMethod.name}($beforeArgsStr);');
       }
       if (beforePlugins.isNotEmpty) {
         int i = 0;
@@ -944,20 +793,14 @@ class TypeInfo {
           i++;
         }
       }
-      bool isVoid =
-          (methodElement.returnType is VoidType) ||
-          (methodElement.returnType.getDisplayString() == 'Future<void>');
+      bool isVoid = (methodElement.returnType is VoidType) || (methodElement.returnType.getDisplayString() == 'Future<void>');
       if (beforePlugins.length + afterPlugins.length > 0) {
-        lines.add(
-          '${!isVoid ? 'var ret = ' : ''}${methodElement.firstFragment.isAsynchronous ? 'await ' : ''}super.${methodElement.name}($paramsStr);',
-        );
+        lines.add('${!isVoid ? 'var ret = ' : ''}${methodElement.firstFragment.isAsynchronous ? 'await ' : ''}super.${methodElement.name}($paramsStr);');
       }
       for (var pluginMethod in afterPlugins.keys) {
         String pluginName = afterPlugins[pluginMethod]!.varName;
         //add params to after plugin, TODO: validate if names match original method params
-        List<String> params = pluginMethod.firstFragment.formalParameters
-            .map((mp) => mp.name!)
-            .toList();
+        List<String> params = pluginMethod.firstFragment.formalParameters.map((mp) => mp.name!).toList();
         if (!isVoid) {
           params.first = 'ret';
         }
@@ -1003,9 +846,7 @@ class CompiledFieldMethodPart {
 
   getCallExpression(String thisName) {
     List<String> params = [thisName];
-    params.addAll(
-      methodElement.firstFragment.formalParameters.map((mp) => mp.name!),
-    );
+    params.addAll(methodElement.firstFragment.formalParameters.map((mp) => mp.name!));
     return '$methodName(${params.join(",")});';
   }
 
@@ -1017,28 +858,18 @@ class CompiledFieldMethodPart {
     FieldElement field,
     String thisReplace,
   ) async {
-    FormalParameterFragment fieldParameter = fieldMethodPart
-        .firstFragment
-        .formalParameters
-        .where((element) => element.name == 'field')
-        .first;
+    FormalParameterFragment fieldParameter = fieldMethodPart.firstFragment.formalParameters.where((element) => element.name == 'field').first;
 
-    if (!type.typeMap.typeSystem.isSubtypeOf(
-          field.type,
-          fieldParameter.element.type,
-        ) ||
+    if (!type.typeMap.typeSystem.isSubtypeOf(field.type, fieldParameter.element.type) ||
         //dynamic is nullable but returns empty suffix
-        !(fieldParameter.element.type is DynamicType ||
-            field.type.nullabilitySuffix ==
-                fieldParameter.element.type.nullabilitySuffix)) {
+        !(fieldParameter.element.type is DynamicType || field.type.nullabilitySuffix == fieldParameter.element.type.nullabilitySuffix)) {
       return null;
     }
 
     String? requireAnnotation;
     for (var m in fieldMethodPart.metadata.annotations) {
       if (m.toSource().startsWith('@AnnotatedWith(')) {
-        requireAnnotation =
-            '@${m.toSource().substring(15, m.toSource().length - 1)}';
+        requireAnnotation = '@${m.toSource().substring(15, m.toSource().length - 1)}';
       }
     }
 
@@ -1046,64 +877,44 @@ class CompiledFieldMethodPart {
       bool pass = false;
       for (var m in field.metadata.annotations) {
         //support for parametrised required annotations
-        if (m.toSource() == requireAnnotation ||
-            m.toSource().startsWith('$requireAnnotation('))
-          pass = true;
+        if (m.toSource() == requireAnnotation || m.toSource().startsWith('$requireAnnotation(')) pass = true;
       }
       if (!pass) return null;
     }
 
     var enclosingType = (field.enclosingElement is ClassElement)
-        ? type.typeMap.fromDartType(
-            (field.enclosingElement as ClassElement).thisType,
-            context: type.typeArgumentsMap(),
-          )
+        ? type.typeMap.fromDartType((field.enclosingElement as ClassElement).thisType, context: type.typeArgumentsMap())
         : (field.enclosingElement is MixinElement)
-        ? type.typeMap.fromDartType(
-            (field.enclosingElement as MixinElement).thisType,
-            context: type.typeArgumentsMap(),
-          )
+        ? type.typeMap.fromDartType((field.enclosingElement as MixinElement).thisType, context: type.typeArgumentsMap())
         : null;
 
     if (enclosingType == null) {
       return null;
     }
     CompiledFieldMethodPart compiledPart;
-    if (!type.typeMap.compiledMethodsByType[compiledMethod]!.containsKey(
-      enclosingType.uniqueName,
-    )) {
-      type.typeMap.compiledMethodsByType[compiledMethod]![enclosingType
-          .uniqueName] = compiledPart = CompiledFieldMethodPart(
+    if (!type.typeMap.compiledMethodsByType[compiledMethod]!.containsKey(enclosingType.uniqueName)) {
+      type.typeMap.compiledMethodsByType[compiledMethod]![enclosingType.uniqueName] = compiledPart = CompiledFieldMethodPart(
         type.typeMap,
         compiledMethod,
         enclosingType,
       );
     } else {
-      compiledPart = type
-          .typeMap
-          .compiledMethodsByType[compiledMethod]![enclosingType.uniqueName]!;
+      compiledPart = type.typeMap.compiledMethodsByType[compiledMethod]![enclosingType.uniqueName]!;
     }
 
-    if (!compiledPart.stubs.containsKey(field) ||
-        !compiledPart.stubs[field]!.containsKey(fieldMethodPart)) {
+    if (!compiledPart.stubs.containsKey(field) || !compiledPart.stubs[field]!.containsKey(fieldMethodPart)) {
       //generate stub;
       if (!compiledPart.stubs.containsKey(field)) {
         compiledPart.stubs[field] = {};
       }
       List<String> stubLines = compiledPart.stubs[field]![fieldMethodPart] = [];
 
-      var compiledFieldType = type.typeMap.fromDartType(
-        field.type,
-        context: type.typeArgumentsMap(),
-      );
+      var compiledFieldType = type.typeMap.fromDartType(field.type, context: type.typeArgumentsMap());
 
       stubLines.add('{');
       //magic parameter match
-      for (var methodParameter
-          in fieldMethodPart.firstFragment.formalParameters) {
-        if (compiledMethod.firstFragment.formalParameters
-            .where((element) => element.name == methodParameter.name)
-            .isNotEmpty) {
+      for (var methodParameter in fieldMethodPart.firstFragment.formalParameters) {
+        if (compiledMethod.firstFragment.formalParameters.where((element) => element.name == methodParameter.name).isNotEmpty) {
           //this parameter comes from compiled method
           continue;
         }
@@ -1117,15 +928,12 @@ class CompiledFieldMethodPart {
           methodParameterValue = '"${field.name}"';
         } else if (methodParameter.name == 'className') {
           methodParameterValue = '"${compiledFieldType.uniqueName}"';
-        } else if (fieldParameter.element.type.isDartCoreEnum &&
-            methodParameter.name == 'values') {
+        } else if (fieldParameter.element.type.isDartCoreEnum && methodParameter.name == 'values') {
           methodParameterValue = '${compiledFieldType.uniqueName}.values';
         } else if (methodParameter.element.isOptional) {
-          methodParameterValue =
-              methodParameter.element.defaultValueCode ?? 'null';
+          methodParameterValue = methodParameter.element.defaultValueCode ?? 'null';
           var nameParts = methodParameter.name!.split('_');
-          String annotationName =
-              '@${nameParts[0][0].toUpperCase()}${nameParts[0].substring(1)}';
+          String annotationName = '@${nameParts[0][0].toUpperCase()}${nameParts[0].substring(1)}';
           if (nameParts.length == 1) {
             methodParameterValue = 'false';
             for (var fieldMeta in field.metadata.annotations) {
@@ -1135,43 +943,31 @@ class CompiledFieldMethodPart {
             }
           } else {
             for (var fieldMeta in field.metadata.annotations) {
-              if (fieldMeta.toSource().startsWith('$annotationName(') ||
-                  fieldMeta.toSource().startsWith('$annotationName.t(')) {
+              if (fieldMeta.toSource().startsWith('$annotationName(') || fieldMeta.toSource().startsWith('$annotationName.t(')) {
                 var constantValue = fieldMeta.computeConstantValue();
                 if (constantValue == null) {
                   methodParameterValue = '"COMPUTATION ERROR"';
                   break;
                 }
-                DartObject annotationField = constantValue.getField(
-                  nameParts[1],
-                )!;
+                DartObject annotationField = constantValue.getField(nameParts[1])!;
                 var annotationValue = annotationField.type!.getDisplayString();
                 switch (annotationValue) {
                   case 'Type':
                     //allow passing type as annotation
                     String typeName = fieldMeta.toSource();
-                    typeName = typeName.substring(
-                      typeName.indexOf('(') + 1,
-                      typeName.indexOf(')'),
-                    );
+                    typeName = typeName.substring(typeName.indexOf('(') + 1, typeName.indexOf(')'));
                     if (compiledPart.typeMap.allTypes.containsKey(typeName)) {
-                      methodParameterValue = compiledPart.typeMap
-                          .generateTypeGetter(
-                            compiledPart.typeMap.allTypes[typeName]!,
-                          );
+                      methodParameterValue = compiledPart.typeMap.generateTypeGetter(compiledPart.typeMap.allTypes[typeName]!);
                     } else {
                       methodParameterValue = "null";
                     }
                     break;
                   case 'String':
                     //todo toDartVariable?
-                    methodParameterValue =
-                        '"${annotationField.toStringValue()!.replaceAll('\$', '\\\$').replaceAll('"', '\\"')}"';
+                    methodParameterValue = '"${annotationField.toStringValue()!.replaceAll('\$', '\\\$').replaceAll('"', '\\"')}"';
                     break;
                   case 'int':
-                    methodParameterValue = annotationField
-                        .toIntValue()
-                        .toString();
+                    methodParameterValue = annotationField.toIntValue().toString();
                     break;
                   default:
                     methodParameterValue = annotationField.toString();
@@ -1183,17 +979,12 @@ class CompiledFieldMethodPart {
         if (methodParameterValue.startsWith('\$')) {
           stubLines.add('var ${methodParameter.name} = $methodParameterValue;');
         } else {
-          stubLines.add(
-            'const ${methodParameter.name} = $methodParameterValue;',
-          );
+          stubLines.add('const ${methodParameter.name} = $methodParameterValue;');
         }
       }
       String part = await fieldMethodPart.getSourceCode(type.typeMap.step);
 
-      if (fieldMethodPart.firstFragment.formalParameters.indexWhere(
-            (element) => element.name == 'field',
-          ) >
-          -1) {
+      if (fieldMethodPart.firstFragment.formalParameters.indexWhere((element) => element.name == 'field') > -1) {
         part = part.replaceAll(fieldParameter.name!, 'dis.${field.name}');
       }
       //TODO
@@ -1204,18 +995,9 @@ class CompiledFieldMethodPart {
       part = part.replaceAll('as $paramClass', 'as $fieldClass');
       if (paramClass.contains('<') && fieldClass.contains('<')) {
         //TODO support many parameters?
-        String paramGenericParam = paramClass.substring(
-          paramClass.indexOf('<') + 1,
-          paramClass.length - 1,
-        );
-        String fieldGenericParam = fieldClass.substring(
-          fieldClass.indexOf('<') + 1,
-          fieldClass.length - 1,
-        );
-        part = part.replaceAll(
-          'as $paramGenericParam',
-          'as $fieldGenericParam',
-        );
+        String paramGenericParam = paramClass.substring(paramClass.indexOf('<') + 1, paramClass.length - 1);
+        String fieldGenericParam = fieldClass.substring(fieldClass.indexOf('<') + 1, fieldClass.length - 1);
+        part = part.replaceAll('as $paramGenericParam', 'as $fieldGenericParam');
       }
       //part = "// ${paramClass} \n" + part;
       //part = "// ${fieldClass} \n" + part;
@@ -1244,8 +1026,7 @@ class TypeMap {
   Map<InterfaceElement, String> classNames = {};
 
   //indexed by compiled method and part declaring class name
-  Map<MethodElement, Map<String, CompiledFieldMethodPart>>
-  compiledMethodsByType = {};
+  Map<MethodElement, Map<String, CompiledFieldMethodPart>> compiledMethodsByType = {};
 
   ///
   void registerClassElement(String fullName, Element element) async {
@@ -1275,10 +1056,7 @@ class TypeMap {
     }
   }
 
-  TypeInfo fromDartType(
-    DartType type, {
-    Map<TypeParameterElement, DartType> context = const {},
-  }) {
+  TypeInfo fromDartType(DartType type, {Map<TypeParameterElement, DartType> context = const {}}) {
     List<TypeInfo> typeArguments = [];
     if (type is ParameterizedType) {
       for (var arg in type.typeArguments) {
@@ -1365,9 +1143,7 @@ class TypeMap {
   TypeInfo getBestCandidate(TypeInfo type) {
     List<TypeInfo> candidates = getNonAbstractSubtypes(type);
 
-    candidates.sort(
-      (t1, t2) => typeSystem.isSubtypeOf(t1.type, t2.type) ? 1 : 0,
-    );
+    candidates.sort((t1, t2) => typeSystem.isSubtypeOf(t1.type, t2.type) ? 1 : 0);
 
     if (candidates.length > 1) {
       //throw new Exception('too many ${type.displayName}');
@@ -1390,10 +1166,8 @@ class TypeMap {
     allTypes.forEach((name, ce) {
       if (ce.element != null) {
         for (var st in ce.element!.allSupertypes) {
-          if (st.getDisplayString().startsWith('TypePlugin<') &&
-              st.typeArguments.length == 1) {
-            if (st.typeArguments[0] is! InvalidType &&
-                typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
+          if (st.getDisplayString().startsWith('TypePlugin<') && st.typeArguments.length == 1) {
+            if (st.typeArguments[0] is! InvalidType && typeSystem.isAssignableTo(type.type, st.typeArguments[0])) {
               plugins.add(ce);
             }
           }
@@ -1410,8 +1184,7 @@ class TypeMap {
       //output.writeLn("//element ok");
 
       if (!includeAbstract) {
-        for (var metadataElement
-            in (type.element as ClassElement).metadata.annotations) {
+        for (var metadataElement in (type.element as ClassElement).metadata.annotations) {
           if (metadataElement.toSource() == '@ComposeSubtypes') {
             return false;
           }
@@ -1422,9 +1195,7 @@ class TypeMap {
         return true;
       }
       //output.writeLn("//name not fit");
-      if (!includeAbstract &&
-          (!type.hasInterceptor() && type.element!.isAbstract))
-        return false;
+      if (!includeAbstract && (!type.hasInterceptor() && type.element!.isAbstract)) return false;
       //output.writeLn("//interceptor ok");
       bool fits = false;
 
@@ -1433,27 +1204,18 @@ class TypeMap {
         //isSubtype = isSubtype || i.displayName == parentType.displayName;
         //TODO: add results to debug info, fix in tests
         String stName = st.getDisplayString();
-        if (stName.contains('<'))
-          stName = stName.substring(0, stName.indexOf('<'));
+        if (stName.contains('<')) stName = stName.substring(0, stName.indexOf('<'));
         String parentTypeName = parentType.type.getDisplayString();
-        if (parentTypeName.contains('<'))
-          parentTypeName = parentTypeName.substring(
-            0,
-            parentTypeName.indexOf('<'),
-          );
+        if (parentTypeName.contains('<')) parentTypeName = parentTypeName.substring(0, parentTypeName.indexOf('<'));
         parentFits = parentFits & (stName == parentTypeName);
         if (parentType.typeArguments.length == st.typeArguments.length) {
           for (var i = 0; i < parentType.typeArguments.length; i++) {
             parentFits =
                 parentFits &&
-                ((parentType.typeArguments[i].type.getDisplayString() ==
-                        st.typeArguments[i].getDisplayString())
+                ((parentType.typeArguments[i].type.getDisplayString() == st.typeArguments[i].getDisplayString())
                     //|| typeSystem.isSubtypeOf(parentType.typeArguments[i].type, st.typeArguments[i])  //TODO ????? maybe both? or maybe for separate usage case?
                     ||
-                    typeSystem.isSubtypeOf(
-                      st.typeArguments[i],
-                      parentType.typeArguments[i].type,
-                    )); //
+                    typeSystem.isSubtypeOf(st.typeArguments[i], parentType.typeArguments[i].type)); //
             //parentFits = parentFits & st.typeArguments[i].isAssignableTo(parentType.arguments[i].type);
           }
         } else {

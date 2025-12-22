@@ -10,8 +10,7 @@ abstract class Bar {
   @InjectConfig
   String get stringField;
 
-  String format(String prefix) =>
-      "Bar: $prefix ${classNames.join(',')} $stringField";
+  String format(String prefix) => "Bar: $prefix ${classNames.join(',')} $stringField";
 }
 
 @Compose

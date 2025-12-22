@@ -13,8 +13,7 @@ abstract class Foo implements Pluggable {
   @InjectConfig
   int get integerField;
 
-  String format(String prefix) =>
-      "Foo: $prefix $className $stringField $integerField";
+  String format(String prefix) => "Foo: $prefix $className $stringField $integerField";
 }
 
 @Compose
@@ -26,8 +25,7 @@ abstract class FooChild extends Foo {
   bool get booleanField;
 
   @override
-  String format(String prefix) =>
-      "FooChild:${super.format(prefix)} $doubleField $booleanField";
+  String format(String prefix) => "FooChild:${super.format(prefix)} $doubleField $booleanField";
 }
 
 @Compose
@@ -36,6 +34,5 @@ abstract class FooChild2 extends Foo {
   late String requiredString;
 
   @override
-  String format(String prefix) =>
-      "FooChild2:${super.format(prefix)} $requiredString";
+  String format(String prefix) => "FooChild2:${super.format(prefix)} $requiredString";
 }

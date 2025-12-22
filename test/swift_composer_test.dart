@@ -31,147 +31,36 @@ void main() {
 
     expect(config_test.$om.configInjectTypes.injectInt, equals(2));
     expect(config_test.$om.configInjectTypes.injectString, equals('TEST'));
-    expect(
-      config_test.$om.configInjectTypes.injectListString,
-      equals(['list1', 'list2']),
-    );
-    expect(
-      config_test.$om.configInjectTypes.injectEnum,
-      equals(config_test.TestEnum.value3),
-    );
-    expect(
-      config_test.$om.configInjectTypes.injectFromString.value,
-      equals('TESTX'),
-    );
+    expect(config_test.$om.configInjectTypes.injectListString, equals(['list1', 'list2']));
+    expect(config_test.$om.configInjectTypes.injectEnum, equals(config_test.TestEnum.value3));
+    expect(config_test.$om.configInjectTypes.injectFromString.value, equals('TESTX'));
   });
 
   test('subtypes', () {
     expect(subtypes_test.$om.module_test1_Foo, isNotNull);
 
-    expect(
-      subtypes_test.$om.container.subtypes.allClassNames,
-      equals({
-        'module_test1.Foo',
-        'module_test1.FooChild',
-        'module_test1.FooChild2',
-      }),
-    );
+    expect(subtypes_test.$om.container.subtypes.allClassNames, equals({'module_test1.Foo', 'module_test1.FooChild', 'module_test1.FooChild2'}));
 
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypes
-          .allSubtypes['module_test1.Foo']!
-          .baseClassName,
-      equals('module_test1.Foo'),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypes
-          .allSubtypes['module_test1.FooChild']!
-          .baseClassName,
-      equals('module_test1.Foo'),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypes
-          .allSubtypes['module_test1.FooChild2']!
-          .baseClassName,
-      equals('module_test1.Foo'),
-    );
+    expect(subtypes_test.$om.container.subtypes.allSubtypes['module_test1.Foo']!.baseClassName, equals('module_test1.Foo'));
+    expect(subtypes_test.$om.container.subtypes.allSubtypes['module_test1.FooChild']!.baseClassName, equals('module_test1.Foo'));
+    expect(subtypes_test.$om.container.subtypes.allSubtypes['module_test1.FooChild2']!.baseClassName, equals('module_test1.Foo'));
 
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract1']!
-          .baseClassName,
-      equals('SubtypeOfAbstract1'),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract2']!
-          .baseClassName,
-      equals('SubtypeOfAbstract2'),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract3']!
-          .baseClassName,
-      equals('SubtypeOfAbstract2'),
-    );
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract1']!.baseClassName, equals('SubtypeOfAbstract1'));
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract2']!.baseClassName, equals('SubtypeOfAbstract2'));
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.baseClassName, equals('SubtypeOfAbstract2'));
 
     //test subtype annotations
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract2']!.annotations['TestAnnotation'], equals(true));
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract2']!.annotations['TestAnnotationWithValue'], equals('testValue'));
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.annotations['TestAnnotation'], equals(null));
+    expect(subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.inheritedAnnotations['TestAnnotation'], equals(true));
     expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract2']!
-          .annotations['TestAnnotation'],
-      equals(true),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract2']!
-          .annotations['TestAnnotationWithValue'],
-      equals('testValue'),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract3']!
-          .annotations['TestAnnotation'],
-      equals(null),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract3']!
-          .inheritedAnnotations['TestAnnotation'],
-      equals(true),
-    );
-    expect(
-      subtypes_test
-          .$om
-          .container
-          .subtypesWithAbstractBase
-          .allSubtypes['SubtypeOfAbstract3']!
-          .annotations['TestAnnotationWithValue'],
+      subtypes_test.$om.container.subtypesWithAbstractBase.allSubtypes['SubtypeOfAbstract3']!.annotations['TestAnnotationWithValue'],
       equals('overridenValue'),
     );
 
-    expect(
-      subtypes_test.$om.container.subtypes.allClassNames,
-      equals([
-        'module_test1.Foo',
-        'module_test1.FooChild',
-        'module_test1.FooChild2',
-      ]),
-    );
-    expect(
-      subtypes_test.$om.container.subtypes.getCode<subtypes_test.Foo>(),
-      equals('module_test1.Foo'),
-    );
+    expect(subtypes_test.$om.container.subtypes.allClassNames, equals(['module_test1.Foo', 'module_test1.FooChild', 'module_test1.FooChild2']));
+    expect(subtypes_test.$om.container.subtypes.getCode<subtypes_test.Foo>(), equals('module_test1.Foo'));
   });
 
   test('factory', () {
@@ -235,28 +124,14 @@ void main() {
         'four': 'bar.BarChild',
       }),
     );
-    var created = fields_test.$om.container.fromJson({
-      'one': 'one',
-      'two': 'two',
-      'three': 'three',
-      'four': 'four',
-      'fifth': 'bar',
-    });
+    var created = fields_test.$om.container.fromJson({'one': 'one', 'two': 'two', 'three': 'three', 'four': 'four', 'fifth': 'bar'});
     expect(created.one.stringField, equals('FooChildField'));
   });
 
   test('plugins', () {
-    expect(
-      plugins_test.$om.foo_Foo.format('prefix'),
-      equals('AFTER:Foo: prefix:BEFORE foo.Foo FooField 124'),
-    );
+    expect(plugins_test.$om.foo_Foo.format('prefix'), equals('AFTER:Foo: prefix:BEFORE foo.Foo FooField 124'));
 
-    expect(
-      plugins_test.$om.genericTypedWithFoo.getDescription(
-        plugins_test.$om.genericTypedWithFoo.element,
-      ),
-      equals('stringField=FooField'),
-    );
+    expect(plugins_test.$om.genericTypedWithFoo.getDescription(plugins_test.$om.genericTypedWithFoo.element), equals('stringField=FooField'));
   });
 
   test('generics', () {
@@ -282,26 +157,13 @@ void main() {
     expect(test['mixin1Field'], equals("mixin1FieldValue"));
     expect(test['mixin2Field'], equals("mixin2FieldValue"));
 
-    expect(
-      mixins_test.$om.container.instancesOfMixinUser1.keys,
-      equals(['MixinUser1', 'MixinUser2', 'MixinUser3']),
-    );
-    expect(
-      mixins_test.$om.container.instancesOfTestMixin1.keys,
-      equals(['MixinUser1', 'MixinUser2', 'MixinUser3']),
-    );
-    expect(
-      mixins_test.$om.container.instancesOfTestMixin2.keys,
-      equals(['MixinUser2', 'MixinUser3']),
-    );
+    expect(mixins_test.$om.container.instancesOfMixinUser1.keys, equals(['MixinUser1', 'MixinUser2', 'MixinUser3']));
+    expect(mixins_test.$om.container.instancesOfTestMixin1.keys, equals(['MixinUser1', 'MixinUser2', 'MixinUser3']));
+    expect(mixins_test.$om.container.instancesOfTestMixin2.keys, equals(['MixinUser2', 'MixinUser3']));
     Map<String, String> test2 = {};
     mixins_test.$om.mixinUser3.fieldsToJson(test2);
     expect(test2['mixin1Field'], equals('overriden'));
     //generate factories from mixins
-    expect(
-      mixins_test.$om.container.instancesOfTestMixin2['MixinUser3']!
-          .createFoo(),
-      isNotNull,
-    );
+    expect(mixins_test.$om.container.instancesOfTestMixin2['MixinUser3']!.createFoo(), isNotNull);
   });
 }

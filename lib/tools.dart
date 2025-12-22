@@ -14,9 +14,7 @@ class DiConfig {
         _mergeMaps(first[prefixedKey] as Map, other[key], null);
       } else {
         //make sure maps are modifiable.
-        first[prefixedKey] = other[key] is Map
-            ? Map.from(other[key])
-            : other[key];
+        first[prefixedKey] = other[key] is Map ? Map.from(other[key]) : other[key];
       }
     }
   }
@@ -41,9 +39,7 @@ class OutputWriter {
   }
 
   writeSplit() {
-    writeLn(
-      '// **************************************************************************',
-    );
+    writeLn('// **************************************************************************');
   }
 
   String getOutput() => _lines.join("\n");
