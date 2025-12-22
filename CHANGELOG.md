@@ -1,3 +1,8 @@
+# 0.9.1
+
+* bugfix: reading workspace packages paths
+* added lints dev package and apply recommended lints
+
 # 0.9.0
 
 * update analyzer to 8.4.1 and sdk to ^3.9.0
