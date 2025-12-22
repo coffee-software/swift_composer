@@ -1,10 +1,13 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as module_test1;
 export '../lib/foo.dart';
 
 part 'subtypes.c.dart';
 
-//subtype annotations
+// subtype annotations
+
+// ignore: constant_identifier_names
 const TestAnnotation = true;
 
 class TestAnnotationWithValue {

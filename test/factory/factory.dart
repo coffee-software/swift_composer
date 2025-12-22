@@ -1,4 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as module_test;
 
 part 'factory.c.dart';
@@ -24,7 +25,7 @@ abstract class Container {
 
   void test() {
     module_test.Foo x1 = createFoo();
-    module_test.Foo x2 = createSubFoo('module_test.Foo');
-    Complex complex = createComplex('text', x1);
+    createSubFoo('module_test.Foo');
+    createComplex('text', x1);
   }
 }

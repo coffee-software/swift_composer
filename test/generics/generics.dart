@@ -1,4 +1,5 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as module_test;
 
 part 'generics.c.dart';

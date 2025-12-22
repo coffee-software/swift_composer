@@ -1,5 +1,7 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as foo;
+// ignore: avoid_relative_lib_imports
 import '../lib/bar.dart' as bar;
 
 part 'fields.c.dart';
@@ -21,12 +23,14 @@ abstract class Base {
   foo.FooChild createFooChild(String requiredString);
 
   @CompileFieldsOfType
+  // ignore: unused_element
   void _copyFieldsFromJsonFoo(Map source, String name, foo.Foo field) {
     // ignore: unnecessary_this
     field = this.createFooChild(source[name]);
   }
 
   @CompileFieldsOfType
+  // ignore: unused_element
   void _copyFieldsFromJsonBar(Map source, String name, bar.Bar field) {
     field = $om.bar_BarChild;
   }
@@ -47,15 +51,20 @@ abstract class Container extends Base {
   void fieldsToJson(Map target);
 
   @CompileFieldsOfType
+  // ignore: unused_element
   void _fieldsToJsonFoo(
     Map target,
     String name,
     String className,
     foo.Foo field, {
     bool boolParam = false,
+    // ignore: non_constant_identifier_names
     int intParam_value = 1,
+    // ignore: non_constant_identifier_names
     String stringParam_value = 'test1',
+    // ignore: non_constant_identifier_names
     int complexParam_value1 = 2,
+    // ignore: non_constant_identifier_names
     String complexParam_value2 = 'test2',
   }) {
     target[name] = {
@@ -71,6 +80,7 @@ abstract class Container extends Base {
   }
 
   @CompileFieldsOfType
+  // ignore: unused_element
   void _fieldsToJsonBar(Map target, String name, bar.Bar field) {
     target[name] = field.classNames.join('');
   }
@@ -85,6 +95,7 @@ abstract class Container extends Base {
   }
 }
 
+// ignore: constant_identifier_names
 const BoolParam = true;
 
 class IntParam {

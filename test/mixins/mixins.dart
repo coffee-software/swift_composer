@@ -1,8 +1,10 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as module_test;
 
 part 'mixins.c.dart';
 
+// ignore: constant_identifier_names
 const FieldAnnotation = true;
 
 @ComposeSubtypes
@@ -30,6 +32,7 @@ abstract class MixinUser1 with TestMixin1 {
 
   @CompileFieldsOfType
   @AnnotatedWith(FieldAnnotation)
+  // ignore: unused_element
   void _fieldsToJsonString(Map target, String name, String field) {
     target[name] = field;
   }
@@ -43,7 +46,8 @@ abstract class MixinUser2 extends MixinUser1 with TestMixin2 {
 
 @ComposeSubtypes
 mixin TestMixin3 {
-  //override field test
+  // override field test
+  // ignore: non_constant_identifier_names
   String get override_mixin1Field => 'overriden';
 }
 

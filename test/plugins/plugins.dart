@@ -1,6 +1,9 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as foo;
+// ignore: avoid_relative_lib_imports
 import '../lib/bar.dart' as bar;
+// ignore: avoid_relative_lib_imports
 import '../lib/generics.dart' as generics;
 
 part 'plugins.c.dart';

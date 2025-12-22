@@ -262,8 +262,6 @@ class CompiledOmGenerator implements TemplateLoader {
 
   ///
   Future<void> _loadLibraryFiles() async {
-    var packagesMap = <String, String>{};
-
     for (var import in library.element.firstFragment.libraryImports) {
       if (import.uri is! DirectiveUriWithRelativeUriString) {
         continue;

@@ -1,6 +1,9 @@
 import 'package:swift_composer/swift_composer.dart';
+// ignore: avoid_relative_lib_imports
 import '../lib/foo.dart' as m1;
+// ignore: avoid_relative_lib_imports
 import '../lib/foo2.dart' as m2;
+// ignore: avoid_relative_lib_imports
 import '../lib/generics.dart' as generics;
 
 part 'config.c.dart';

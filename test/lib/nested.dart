@@ -11,5 +11,5 @@ abstract class CombinedFoo {
   String get className;
 
   @Inject
-  Foo get inner_module_Foo1;
+  Foo get innerModuleFoo1;
 }
