@@ -38,7 +38,11 @@ extension MethodElementSource on MethodElement {
       part = result.getFragmentDeclaration(firstFragment)!.node.toSource();
     }
     //named parameters can be defined
-    part = part.substring(part.indexOf(') {') + 3, part.length - 1);
+    if (firstFragment.isAsynchronous) {
+      part = part.substring(part.indexOf(') async {') + 9, part.length - 1);
+    } else {
+      part = part.substring(part.indexOf(') {') + 3, part.length - 1);
+    }
     sourcesCache[hashCode] = part;
     //part = '//method_hash:' + this.hashCode.toString() + "\n" + part;
     return part;
@@ -653,7 +657,6 @@ class TypeInfo {
             })
             .join(',');
         var typeArgs = typeArgsList.isNotEmpty ? "<$typeArgsList>" : '';
-
         output.writeLn("${returnType.uniqueName} ${methodElement.name}$typeArgs(");
         output.writeLn(
           methodElement.formalParameters
@@ -664,7 +667,7 @@ class TypeInfo {
               .join(","),
         );
 
-        output.writeLn(") ${methodElement.firstFragment.isAsynchronous ? 'async' : ''} {");
+        output.writeLn(") ${methodElement.returnType.isDartAsyncFuture ? 'async' : ''} {");
         output.writeMany(methodLines);
         output.writeLn("}");
       }
@@ -841,12 +844,18 @@ class CompiledFieldMethodPart {
         return "${parameterType.uniqueName} ${mp.name}";
       }),
     );
+    if (methodElement.returnType.isDartAsyncFuture) {
+      return 'Future<void> $methodName(${params.join(",")}) async';
+    }
     return 'void $methodName(${params.join(",")})';
   }
 
   String getCallExpression(String thisName) {
     List<String> params = [thisName];
     params.addAll(methodElement.firstFragment.formalParameters.map((mp) => mp.name!));
+    if (methodElement.returnType.isDartAsyncFuture) {
+      return 'await $methodName(${params.join(",")});';
+    }
     return '$methodName(${params.join(",")});';
   }
 
@@ -1213,7 +1222,7 @@ class TypeMap {
             parentFits =
                 parentFits &&
                 ((parentType.typeArguments[i].type.getDisplayString() == st.typeArguments[i].getDisplayString())
-                    //|| typeSystem.isSubtypeOf(parentType.typeArguments[i].type, st.typeArguments[i])  //TODO ????? maybe both? or maybe for separate usage case?
+                    //|| typeSystem.isSubtypeOf(parentType.typeArguments[i].type, st.typeArguments[i])  //TODO ????? maybe both? or maybe for separate usage case? (ImplementationsOf)
                     ||
                     typeSystem.isSubtypeOf(st.typeArguments[i], parentType.typeArguments[i].type)); //
             //parentFits = parentFits & st.typeArguments[i].isAssignableTo(parentType.arguments[i].type);
