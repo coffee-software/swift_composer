@@ -417,7 +417,8 @@ class CompiledOmGenerator implements TemplateLoader {
               var annotation = metadataElement.toSource();
               if (annotation.startsWith('@ComposeIfModule(')) {
                 var requireModule = annotation.substring(18, annotation.length - 2);
-                if (modules.where((module) => module.name == requireModule).isEmpty) {
+                //this is a temporary hack to exclude admin config imports
+                if (modules.where((module) => module.name == requireModule && !module.filePath.endsWith('config.dart')).isEmpty) {
                   output.writeLn('//type: ${element.name ?? 'NULL'} requires module: $requireModule but it is not imported. skipping');
                   return;
                 }
