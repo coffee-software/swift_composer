@@ -343,12 +343,13 @@ class CompiledOmGenerator implements TemplateLoader {
     String widgetsFileName = widgetsIndexPath.substring(widgetsIndexPath.lastIndexOf('/') + 1);
     widgetsIndexPath = '${widgetsDirName}_${widgetsFileName.replaceFirst('.dart', '_widgets.scss')}';
     File widgetsIndex = File(widgetsIndexPath);
+    List<String> widgetsUsesContent = [];
     List<String> widgetsIndexContent = [];
     //unique set to generate Generic widgets once.
     Set<String> widgetsSet = <String>{};
     if (widgetsIndex.existsSync()) {
       output.writeLn('// generating widgets index file at ${widgetsIndex.path}');
-      widgetsIndexContent.add('// auto generated widgets index file. do not modify');
+      widgetsUsesContent.add('// auto generated widgets index file. do not modify');
 
       if (typeMap.allTypes.containsKey('module_core.Widget')) {
         for (var type in typeMap.getAllSubtypes(typeMap.allTypes['module_core.Widget']!)) {
@@ -359,20 +360,21 @@ class CompiledOmGenerator implements TemplateLoader {
         var templateFile = openTemplate('$widgetName.scss');
         if (templateFile != null) {
           //output.writeLn('// file: ${templateFile.module.name} ${templateFile.path} ${templateFile.file.path}');
-          widgetsIndexContent.add('.$widgetName {');
           if (templateFile.module.name == 'application') {
             String relPath = relative('${Directory.current.path}/${templateFile.path}', from: dirname(widgetsIndexPath));
-            widgetsIndexContent.add('    @import "$relPath"');
+            widgetsUsesContent.add('@use "$relPath" as $widgetName;');
           } else {
-            widgetsIndexContent.add('    @import "package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}"');
+            widgetsUsesContent.add('@use "package:${templateFile.module.name}${templateFile.path.replaceFirst('/lib', '')}" as $widgetName;');
           }
+          widgetsIndexContent.add('.$widgetName {');
+          widgetsIndexContent.add('  @include $widgetName.widget;');
           widgetsIndexContent.add('}');
-          var content = widgetsIndexContent.join("\n");
-          if (widgetsIndex.readAsStringSync() != content) {
-            //avoid rebuilding scss
-            widgetsIndex.writeAsStringSync(content);
-          }
         }
+      }
+      var content = widgetsUsesContent.join("\n") + "\n\n" + widgetsIndexContent.join("\n");
+      if (widgetsIndex.readAsStringSync() != content) {
+        //avoid rebuilding scss
+        widgetsIndex.writeAsStringSync(content);
       }
     }
   }
